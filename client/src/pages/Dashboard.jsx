@@ -4,7 +4,6 @@ import { api } from '../api.js';
 import { formatMoney, formatSignedMoney } from '../format.js';
 import MonthPicker from '../components/MonthPicker.jsx';
 import StatCard from '../components/StatCard.jsx';
-import BarRow from '../components/BarRow.jsx';
 
 const now = new Date();
 
@@ -36,8 +35,6 @@ export default function Dashboard() {
       cancelled = true;
     };
   }, [year, month]);
-
-  const maxAbsProfit = data ? Math.max(1, ...data.rows.map((r) => Math.abs(r.profit))) : 1;
 
   return (
     <div className="page">
@@ -72,20 +69,6 @@ export default function Dashboard() {
               value={formatMoney(data.totals.profit)}
               tone={data.totals.profit >= 0 ? 'positive' : 'negative'}
             />
-          </div>
-
-          <div className="card">
-            <h2>Profit per programator</h2>
-            {data.rows.length === 0 && <p className="muted">Nu exista programatori inca.</p>}
-            {data.rows.map((row) => (
-              <BarRow
-                key={row.developer_id}
-                label={row.name}
-                value={row.profit}
-                max={maxAbsProfit}
-                tone={row.profit >= 0 ? 'positive' : 'negative'}
-              />
-            ))}
           </div>
 
           <div className="card">

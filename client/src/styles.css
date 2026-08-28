@@ -413,49 +413,9 @@ button {
   text-align: center;
 }
 
-.bar-row {
-  display: grid;
-  grid-template-columns: 10rem 1fr;
-  align-items: center;
-  gap: 0.75rem;
-  margin-bottom: 0.6rem;
-}
-
-.bar-row-label {
-  font-size: 0.9rem;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.bar-row-track {
-  background: var(--bg);
-  border-radius: 6px;
-  height: 0.65rem;
-  overflow: hidden;
-}
-
-.bar-row-fill {
-  height: 100%;
-  border-radius: 6px;
-  background: var(--muted);
-}
-
-.bar-row-fill.tone-positive {
-  background: var(--success);
-}
-
-.bar-row-fill.tone-negative {
-  background: var(--danger);
-}
-
 @media (max-width: 600px) {
   .app-main {
     padding: 1rem;
-  }
-
-  .bar-row {
-    grid-template-columns: 6rem 1fr;
   }
 
   th,
