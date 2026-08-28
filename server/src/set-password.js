@@ -24,7 +24,9 @@ if (!password) {
 }
 
 const { hash, salt } = hashPassword(password);
-const existing = db.prepare('SELECT * FROM users WHERE username = ?').get(username);
+const existing = db
+  .prepare('SELECT * FROM users WHERE username = ? COLLATE NOCASE')
+  .get(username);
 
 if (existing) {
   db.prepare('UPDATE users SET password_hash = ?, password_salt = ? WHERE id = ?').run(

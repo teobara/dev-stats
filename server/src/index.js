@@ -4,10 +4,13 @@ const express = require('express');
 const cors = require('cors');
 
 const { attachUser, requireAuth } = require('./middleware/auth');
+const { runBootstrap } = require('./bootstrap');
 const authRouter = require('./routes/auth');
 const developersRouter = require('./routes/developers');
 const projectsRouter = require('./routes/projects');
 const summaryRouter = require('./routes/summary');
+
+runBootstrap();
 
 const app = express();
 const PORT = process.env.PORT || 4000;

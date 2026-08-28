@@ -61,7 +61,9 @@ router.post('/login', (req, res) => {
     return res.status(400).json({ error: 'Introdu utilizator si parola.' });
   }
 
-  const user = db.prepare('SELECT * FROM users WHERE username = ?').get(username.trim());
+  const user = db
+    .prepare('SELECT * FROM users WHERE username = ? COLLATE NOCASE')
+    .get(username.trim());
   if (!user || !verifyPassword(password, user.password_hash, user.password_salt)) {
     return res.status(401).json({ error: 'Utilizator sau parola incorecta.' });
   }

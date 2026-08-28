@@ -118,18 +118,21 @@ sesiune veche activă a acelui cont).
 3. **Adaugă un Volume** (Railway → serviciul tău → tab *Volumes*), montat de exemplu la `/data`.
    Baza de date SQLite trebuie să stea pe acest disc persistent, altfel se pierde la fiecare
    redeploy.
-4. Setează variabila de mediu a serviciului:
+4. Setează variabilele de mediu ale serviciului:
    - `DB_PATH=/data/dev.sqlite` (calea către fișierul SQLite, pe volumul montat la pasul 3)
-5. Deploy. Railway îți dă un URL public (`*.up.railway.app`), accesibil de pe orice dispozitiv.
-6. Creează utilizatorul de login direct pe baza de date de pe Railway — cel mai simplu e cu
-   `railway run`, din acest folder:
+   - `BOOTSTRAP_USERNAME=Teo` și `BOOTSTRAP_PASSWORD=parola-ta` — la prima pornire, serverul
+     creează automat acest utilizator dacă nu există deja. E sigur să lași aceste două variabile
+     setate permanent: la orice restart ulterior, dacă utilizatorul deja există, nu se întâmplă
+     nimic (nu îi resetează parola).
+5. Deploy. Railway îți dă un URL public (`*.up.railway.app`), accesibil de pe orice dispozitiv —
+   te poți loga direct cu `BOOTSTRAP_USERNAME`/`BOOTSTRAP_PASSWORD` de mai sus.
 
-   ```bash
-   railway run node server/src/set-password.js Teo
-   ```
+**Alternativă**, dacă ai [Railway CLI](https://docs.railway.com/guides/cli) instalat și conectat:
+poți crea/reseta un utilizator direct, fără variabile de bootstrap:
 
-   Asta rulează scriptul cu variabilele de mediu ale serviciului Railway (deci scrie în `DB_PATH`
-   de pe volumul persistent), fără să publici parola nicăieri altundeva decât în terminalul tău.
+```bash
+railway run node server/src/set-password.js Teo
+```
 
 ## Limitări cunoscute / posibile extinderi viitoare
 
