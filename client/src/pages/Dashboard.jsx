@@ -124,7 +124,6 @@ export default function Dashboard() {
                   <thead>
                     <tr>
                       <th>Programator</th>
-                      <th>Rol</th>
                       <th>Venit atribuit</th>
                       <th>Peste tinta</th>
                       <th>Sub tinta</th>
@@ -138,7 +137,6 @@ export default function Dashboard() {
                         <td>
                           <Link to={`/developers/${row.developer_id}`}>{row.name}</Link>
                         </td>
-                        <td className="muted">{row.role || '-'}</td>
                         <td>{formatMoney(row.income)}</td>
                         <td
                           className={row.income_surplus > 0 ? 'text-positive' : 'muted'}
