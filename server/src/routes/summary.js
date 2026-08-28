@@ -22,6 +22,13 @@ router.get('/', (req, res) => {
   const month = Number(req.query.month) || now.getMonth() + 1;
 
   const developers = db.prepare('SELECT * FROM developers ORDER BY active DESC, name ASC').all();
+  const settings = db.prepare('SELECT * FROM settings WHERE id = 1').get();
+  const fixedExpenses = settings.fixed_monthly_expenses || 0;
+
+  // Cheltuielile fixe se impart in mod egal doar intre programatorii activi -
+  // unul inactiv nu mai primeste o cota din ele.
+  const activeDeveloperCount = developers.filter((d) => d.active).length;
+  const overheadShare = activeDeveloperCount > 0 ? fixedExpenses / activeDeveloperCount : 0;
 
   const incomeByDev = new Map(
     monthlyIncomeByDeveloper(year, month).map((row) => [row.developer_id, row.income])
@@ -29,7 +36,8 @@ router.get('/', (req, res) => {
 
   const rows = developers.map((dev) => {
     const income = incomeByDev.get(dev.id) || 0;
-    const cost = dev.monthly_cost || 0;
+    const overhead = dev.active ? overheadShare : 0;
+    const cost = (dev.monthly_cost || 0) + overhead;
     const incomeTarget = dev.monthly_revenue_target || 0;
     const diff = income - incomeTarget;
     return {
@@ -45,6 +53,7 @@ router.get('/', (req, res) => {
       income_surplus: Math.max(0, diff),
       income_deficit: Math.min(0, diff),
       cost,
+      overhead_share: overhead,
       profit: income - cost,
     };
   });
@@ -62,7 +71,15 @@ router.get('/', (req, res) => {
     { income: 0, income_target: 0, income_vs_target: 0, income_surplus: 0, income_deficit: 0, cost: 0, profit: 0 }
   );
 
-  res.json({ year, month, rows, totals });
+  res.json({
+    year,
+    month,
+    rows,
+    totals,
+    fixed_monthly_expenses: fixedExpenses,
+    active_developer_count: activeDeveloperCount,
+    overhead_share: overheadShare,
+  });
 });
 
 router.get('/developer/:id', (req, res) => {
@@ -70,6 +87,14 @@ router.get('/developer/:id', (req, res) => {
   if (!developer) {
     return res.status(404).json({ error: 'Programatorul nu a fost gasit.' });
   }
+
+  const settings = db.prepare('SELECT * FROM settings WHERE id = 1').get();
+  const activeDeveloperCount = db
+    .prepare('SELECT COUNT(*) AS n FROM developers WHERE active = 1').get().n;
+  const overheadShare =
+    developer.active && activeDeveloperCount > 0
+      ? (settings.fixed_monthly_expenses || 0) / activeDeveloperCount
+      : 0;
 
   const monthsBack = Math.min(Math.max(Number(req.query.months) || 12, 1), 36);
   const now = new Date();
@@ -88,7 +113,9 @@ router.get('/developer/:id', (req, res) => {
       )
       .get(developer.id, year, month);
     const income = incomeRow ? incomeRow.income : 0;
-    const cost = developer.monthly_cost || 0;
+    // Costul (inclusiv cota din cheltuielile fixe) e acelasi in fiecare luna -
+    // e valoarea curenta, nu un istoric separat per luna.
+    const cost = (developer.monthly_cost || 0) + overheadShare;
 
     points.push({ year, month, income, cost, profit: income - cost });
   }

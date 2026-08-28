@@ -56,4 +56,7 @@ export const api = {
 
   getMonthlySummary: (year, month) => request(`/summary?year=${year}&month=${month}`),
   getDeveloperTrend: (id, months = 12) => request(`/summary/developer/${id}?months=${months}`),
+
+  getSettings: () => request('/settings'),
+  updateSettings: (data) => request('/settings', { method: 'PUT', body: JSON.stringify(data) }),
 };

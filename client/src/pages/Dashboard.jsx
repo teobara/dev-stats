@@ -13,8 +13,10 @@ export default function Dashboard() {
   const [data, setData] = useState(null);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(true);
+  const [expensesInput, setExpensesInput] = useState('');
+  const [savingExpenses, setSavingExpenses] = useState(false);
 
-  useEffect(() => {
+  function loadSummary() {
     let cancelled = false;
     setLoading(true);
     api
@@ -22,6 +24,7 @@ export default function Dashboard() {
       .then((res) => {
         if (!cancelled) {
           setData(res);
+          setExpensesInput(String(res.fixed_monthly_expenses ?? 0));
           setError('');
         }
       })
@@ -34,7 +37,22 @@ export default function Dashboard() {
     return () => {
       cancelled = true;
     };
-  }, [year, month]);
+  }
+
+  useEffect(loadSummary, [year, month]);
+
+  async function handleExpensesSubmit(e) {
+    e.preventDefault();
+    setSavingExpenses(true);
+    try {
+      await api.updateSettings({ fixed_monthly_expenses: Number(expensesInput) || 0 });
+      loadSummary();
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setSavingExpenses(false);
+    }
+  }
 
   return (
     <div className="page">
@@ -55,6 +73,31 @@ export default function Dashboard() {
 
       {data && !loading && (
         <>
+          <div className="card">
+            <h2>Cheltuieli fixe lunare</h2>
+            <p className="muted">
+              Cheltuieli fixe ale business-ului (chirie, unelte, abonamente etc.), care nu tin de
+              un anumit programator. Se impart in mod egal la programatorii activi (
+              {data.active_developer_count}) si suma rezultata se scade din profitul fiecaruia.
+            </p>
+            <form className="inline-form" onSubmit={handleExpensesSubmit}>
+              <input
+                type="number"
+                placeholder="Suma (EUR)"
+                value={expensesInput}
+                onChange={(e) => setExpensesInput(e.target.value)}
+                style={{ width: '10rem' }}
+                required
+              />
+              <button type="submit" className="btn-primary" disabled={savingExpenses}>
+                {savingExpenses ? 'Se salveaza...' : 'Salveaza'}
+              </button>
+              <span className="muted">
+                = {formatMoney(data.overhead_share)} / programator activ
+              </span>
+            </form>
+          </div>
+
           <div className="stat-row">
             <StatCard label="Venit total" value={formatMoney(data.totals.income)} />
             <StatCard

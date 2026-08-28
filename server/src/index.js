@@ -10,6 +10,7 @@ const developersRouter = require('./routes/developers');
 const projectsRouter = require('./routes/projects');
 const summaryRouter = require('./routes/summary');
 const backupRouter = require('./routes/backup');
+const settingsRouter = require('./routes/settings');
 
 runBootstrap();
 
@@ -33,6 +34,7 @@ app.use('/api/developers', requireAuth, developersRouter);
 app.use('/api/projects', requireAuth, projectsRouter);
 app.use('/api/summary', requireAuth, summaryRouter);
 app.use('/api/backup', requireAuth, backupRouter);
+app.use('/api/settings', requireAuth, settingsRouter);
 
 // In productie servim buildul React direct din acest server (un singur serviciu pe Railway)
 app.use(express.static(CLIENT_DIST));

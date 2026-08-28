@@ -119,6 +119,12 @@ db.exec(`
     expires_at TEXT NOT NULL
   );
 
+  -- Un singur rand (id=1): setari globale ale aplicatiei, nu per programator/proiect.
+  CREATE TABLE IF NOT EXISTS settings (
+    id INTEGER PRIMARY KEY CHECK (id = 1),
+    fixed_monthly_expenses REAL NOT NULL DEFAULT 0
+  );
+
   CREATE INDEX IF NOT EXISTS idx_pd_project ON project_developers(project_id);
   CREATE INDEX IF NOT EXISTS idx_pd_developer ON project_developers(developer_id);
   CREATE INDEX IF NOT EXISTS idx_pr_project_period ON project_revenue(project_id, year, month);
@@ -208,5 +214,8 @@ if (!hasRevenueTarget) {
   db.exec('ALTER TABLE developers ADD COLUMN monthly_revenue_target REAL NOT NULL DEFAULT 8000');
   console.log('Migrare: adaugata coloana developers.monthly_revenue_target (implicit 8000 EUR).');
 }
+
+// Ne asiguram ca exista randul unic de setari (id=1), cu valori implicite.
+db.prepare('INSERT OR IGNORE INTO settings (id, fixed_monthly_expenses) VALUES (1, 0)').run();
 
 module.exports = db;
