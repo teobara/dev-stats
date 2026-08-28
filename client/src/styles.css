@@ -194,6 +194,13 @@ body {
   font-weight: 700;
 }
 
+.stat-card-note {
+  margin-top: 0.35rem;
+  font-size: 0.75rem;
+  color: var(--muted);
+  line-height: 1.3;
+}
+
 .stat-card.tone-positive .stat-card-value {
   color: var(--success);
 }

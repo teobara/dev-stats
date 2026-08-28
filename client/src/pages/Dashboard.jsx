@@ -62,8 +62,9 @@ export default function Dashboard() {
             <StatCard label="Venit total" value={formatMoney(data.totals.income)} />
             <StatCard
               label="Fata de tinta (total)"
-              value={formatSignedMoney(data.totals.income_vs_target)}
-              tone={data.totals.income_vs_target >= 0 ? 'positive' : 'negative'}
+              value={formatSignedMoney(data.totals.income_deficit)}
+              tone={data.totals.income_deficit < 0 ? 'negative' : 'positive'}
+              note="Sunt adunate doar sumele sub tinta (minusurile) - surplusurile nu se scad din total."
             />
             <StatCard label="Cost total" value={formatMoney(data.totals.cost)} />
             <StatCard
@@ -99,7 +100,8 @@ export default function Dashboard() {
                       <th>Programator</th>
                       <th>Rol</th>
                       <th>Venit atribuit</th>
-                      <th>Fata de tinta</th>
+                      <th>Peste tinta</th>
+                      <th>Sub tinta</th>
                       <th>Cost</th>
                       <th>Profit</th>
                     </tr>
@@ -113,10 +115,16 @@ export default function Dashboard() {
                         <td className="muted">{row.role || '-'}</td>
                         <td>{formatMoney(row.income)}</td>
                         <td
-                          className={row.income_vs_target >= 0 ? 'text-positive' : 'text-negative'}
+                          className={row.income_surplus > 0 ? 'text-positive' : 'muted'}
                           title={`Tinta: ${formatMoney(row.income_target)}`}
                         >
-                          {formatSignedMoney(row.income_vs_target)}
+                          {formatSignedMoney(row.income_surplus)}
+                        </td>
+                        <td
+                          className={row.income_deficit < 0 ? 'text-negative' : 'muted'}
+                          title={`Tinta: ${formatMoney(row.income_target)}`}
+                        >
+                          {formatSignedMoney(row.income_deficit)}
                         </td>
                         <td>{formatMoney(row.cost)}</td>
                         <td className={row.profit >= 0 ? 'text-positive' : 'text-negative'}>

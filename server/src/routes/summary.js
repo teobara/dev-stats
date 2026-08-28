@@ -31,6 +31,7 @@ router.get('/', (req, res) => {
     const income = incomeByDev.get(dev.id) || 0;
     const cost = dev.monthly_cost || 0;
     const incomeTarget = dev.monthly_revenue_target || 0;
+    const diff = income - incomeTarget;
     return {
       developer_id: dev.id,
       name: dev.name,
@@ -38,7 +39,11 @@ router.get('/', (req, res) => {
       active: dev.active,
       income,
       income_target: incomeTarget,
-      income_vs_target: income - incomeTarget,
+      income_vs_target: diff,
+      // Plus si minus separate: surplus e mereu >= 0, deficit e mereu <= 0.
+      // Un developer contribuie fie la unul, fie la celalalt, niciodata la ambele.
+      income_surplus: Math.max(0, diff),
+      income_deficit: Math.min(0, diff),
       cost,
       profit: income - cost,
     };
@@ -49,10 +54,12 @@ router.get('/', (req, res) => {
       income: acc.income + row.income,
       income_target: acc.income_target + row.income_target,
       income_vs_target: acc.income_vs_target + row.income_vs_target,
+      income_surplus: acc.income_surplus + row.income_surplus,
+      income_deficit: acc.income_deficit + row.income_deficit,
       cost: acc.cost + row.cost,
       profit: acc.profit + row.profit,
     }),
-    { income: 0, income_target: 0, income_vs_target: 0, cost: 0, profit: 0 }
+    { income: 0, income_target: 0, income_vs_target: 0, income_surplus: 0, income_deficit: 0, cost: 0, profit: 0 }
   );
 
   res.json({ year, month, rows, totals });
