@@ -15,7 +15,7 @@ function getProjectOr404(req, res) {
 function attachDevelopers(project) {
   const developers = db
     .prepare(
-      `SELECT d.id, d.name, d.role, pd.share_percent
+      `SELECT d.id, d.name, d.role
        FROM project_developers pd
        JOIN developers d ON d.id = pd.developer_id
        WHERE pd.project_id = ?
@@ -23,6 +23,14 @@ function attachDevelopers(project) {
     )
     .all(project.id);
   return { ...project, developers };
+}
+
+function isDeveloperAssigned(projectId, developerId) {
+  return Boolean(
+    db
+      .prepare('SELECT 1 FROM project_developers WHERE project_id = ? AND developer_id = ?')
+      .get(projectId, developerId)
+  );
 }
 
 router.get('/', (req, res) => {
@@ -47,7 +55,13 @@ router.get('/:id', (req, res) => {
   if (!project) return;
 
   const revenue = db
-    .prepare('SELECT * FROM project_revenue WHERE project_id = ? ORDER BY year DESC, month DESC')
+    .prepare(
+      `SELECT pdr.*, d.name AS developer_name
+       FROM project_developer_revenue pdr
+       JOIN developers d ON d.id = pdr.developer_id
+       WHERE pdr.project_id = ?
+       ORDER BY pdr.year DESC, pdr.month DESC, d.name ASC`
+    )
     .all(project.id);
 
   res.json({ ...attachDevelopers(project), revenue });
@@ -78,20 +92,23 @@ router.delete('/:id', (req, res) => {
   res.status(204).end();
 });
 
+// POST /:id/developers - aloca un programator pe proiect (fara procent - fiecare
+// isi are propriile sume, introduse manual la /revenue)
 router.post('/:id/developers', (req, res) => {
   const project = getProjectOr404(req, res);
   if (!project) return;
 
-  const { developer_id, share_percent } = req.body;
+  const { developer_id } = req.body;
   const developer = db.prepare('SELECT * FROM developers WHERE id = ?').get(developer_id);
   if (!developer) {
     return res.status(400).json({ error: 'Programatorul nu exista.' });
   }
 
   try {
-    db.prepare(
-      'INSERT INTO project_developers (project_id, developer_id, share_percent) VALUES (?, ?, ?)'
-    ).run(project.id, developer.id, share_percent !== undefined ? Number(share_percent) : 100);
+    db.prepare('INSERT INTO project_developers (project_id, developer_id) VALUES (?, ?)').run(
+      project.id,
+      developer.id
+    );
   } catch (err) {
     if (String(err.message).includes('UNIQUE')) {
       return res.status(409).json({ error: 'Programatorul este deja alocat pe acest proiect.' });
@@ -100,24 +117,6 @@ router.post('/:id/developers', (req, res) => {
   }
 
   res.status(201).json(attachDevelopers(project));
-});
-
-router.put('/:id/developers/:developerId', (req, res) => {
-  const project = getProjectOr404(req, res);
-  if (!project) return;
-
-  const { share_percent } = req.body;
-  const result = db
-    .prepare(
-      'UPDATE project_developers SET share_percent = ? WHERE project_id = ? AND developer_id = ?'
-    )
-    .run(Number(share_percent), project.id, req.params.developerId);
-
-  if (result.changes === 0) {
-    return res.status(404).json({ error: 'Alocarea nu a fost gasita.' });
-  }
-
-  res.json(attachDevelopers(project));
 });
 
 router.delete('/:id/developers/:developerId', (req, res) => {
@@ -129,47 +128,68 @@ router.delete('/:id/developers/:developerId', (req, res) => {
   res.status(204).end();
 });
 
+// GET /:id/revenue - istoric venituri, cate un rand per (programator, luna)
 router.get('/:id/revenue', (req, res) => {
   const project = getProjectOr404(req, res);
   if (!project) return;
   const rows = db
-    .prepare('SELECT * FROM project_revenue WHERE project_id = ? ORDER BY year DESC, month DESC')
+    .prepare(
+      `SELECT pdr.*, d.name AS developer_name
+       FROM project_developer_revenue pdr
+       JOIN developers d ON d.id = pdr.developer_id
+       WHERE pdr.project_id = ?
+       ORDER BY pdr.year DESC, pdr.month DESC, d.name ASC`
+    )
     .all(project.id);
   res.json(rows);
 });
 
+// PUT /:id/revenue - adauga/actualizeaza suma pentru un programator, intr-o luna (upsert)
 router.put('/:id/revenue', (req, res) => {
   const project = getProjectOr404(req, res);
   if (!project) return;
 
-  const { year, month, amount, note } = req.body;
+  const { developer_id, year, month, amount, note } = req.body;
+  const devId = Number(developer_id);
   const y = Number(year);
   const m = Number(month);
   const a = Number(amount);
 
+  if (!Number.isInteger(devId)) {
+    return res.status(400).json({ error: 'Alege un programator.' });
+  }
   if (!Number.isInteger(y) || !Number.isInteger(m) || m < 1 || m > 12 || Number.isNaN(a)) {
     return res.status(400).json({ error: 'An/luna/suma invalide.' });
   }
+  if (!isDeveloperAssigned(project.id, devId)) {
+    return res.status(400).json({ error: 'Programatorul nu este alocat pe acest proiect.' });
+  }
 
   db.prepare(
-    `INSERT INTO project_revenue (project_id, year, month, amount, note)
-     VALUES (?, ?, ?, ?, ?)
-     ON CONFLICT(project_id, year, month)
+    `INSERT INTO project_developer_revenue (project_id, developer_id, year, month, amount, note)
+     VALUES (?, ?, ?, ?, ?, ?)
+     ON CONFLICT(project_id, developer_id, year, month)
      DO UPDATE SET amount = excluded.amount, note = excluded.note`
-  ).run(project.id, y, m, a, note || null);
+  ).run(project.id, devId, y, m, a, note || null);
 
   const row = db
-    .prepare('SELECT * FROM project_revenue WHERE project_id = ? AND year = ? AND month = ?')
-    .get(project.id, y, m);
+    .prepare(
+      `SELECT pdr.*, d.name AS developer_name
+       FROM project_developer_revenue pdr
+       JOIN developers d ON d.id = pdr.developer_id
+       WHERE pdr.project_id = ? AND pdr.developer_id = ? AND pdr.year = ? AND pdr.month = ?`
+    )
+    .get(project.id, devId, y, m);
   res.json(row);
 });
 
-router.delete('/:id/revenue/:year/:month', (req, res) => {
+// DELETE /:id/revenue/:developerId/:year/:month
+router.delete('/:id/revenue/:developerId/:year/:month', (req, res) => {
   const project = getProjectOr404(req, res);
   if (!project) return;
   db.prepare(
-    'DELETE FROM project_revenue WHERE project_id = ? AND year = ? AND month = ?'
-  ).run(project.id, Number(req.params.year), Number(req.params.month));
+    'DELETE FROM project_developer_revenue WHERE project_id = ? AND developer_id = ? AND year = ? AND month = ?'
+  ).run(project.id, Number(req.params.developerId), Number(req.params.year), Number(req.params.month));
   res.status(204).end();
 });
 

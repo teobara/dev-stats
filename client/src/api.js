@@ -44,19 +44,19 @@ export const api = {
   updateProject: (id, data) =>
     request(`/projects/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
   deleteProject: (id) => request(`/projects/${id}`, { method: 'DELETE' }),
-  assignDeveloper: (projectId, data) =>
-    request(`/projects/${projectId}/developers`, { method: 'POST', body: JSON.stringify(data) }),
-  updateAssignment: (projectId, developerId, data) =>
-    request(`/projects/${projectId}/developers/${developerId}`, {
-      method: 'PUT',
-      body: JSON.stringify(data),
+  assignDeveloper: (projectId, developerId) =>
+    request(`/projects/${projectId}/developers`, {
+      method: 'POST',
+      body: JSON.stringify({ developer_id: developerId }),
     }),
   removeAssignment: (projectId, developerId) =>
     request(`/projects/${projectId}/developers/${developerId}`, { method: 'DELETE' }),
   setProjectRevenue: (projectId, data) =>
     request(`/projects/${projectId}/revenue`, { method: 'PUT', body: JSON.stringify(data) }),
-  deleteProjectRevenue: (projectId, year, month) =>
-    request(`/projects/${projectId}/revenue/${year}/${month}`, { method: 'DELETE' }),
+  deleteProjectRevenue: (projectId, developerId, year, month) =>
+    request(`/projects/${projectId}/revenue/${developerId}/${year}/${month}`, {
+      method: 'DELETE',
+    }),
 
   getMonthlySummary: (year, month) => request(`/summary?year=${year}&month=${month}`),
   getDeveloperTrend: (id, months = 12) => request(`/summary/developer/${id}?months=${months}`),

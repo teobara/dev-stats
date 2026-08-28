@@ -35,7 +35,7 @@ router.get('/:id', (req, res) => {
 
   const projects = db
     .prepare(
-      `SELECT p.id, p.name, p.client, p.status, pd.share_percent
+      `SELECT p.id, p.name, p.client, p.status
        FROM project_developers pd
        JOIN projects p ON p.id = pd.project_id
        WHERE pd.developer_id = ?

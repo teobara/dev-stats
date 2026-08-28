@@ -7,11 +7,10 @@ function monthlyIncomeByDeveloper(year, month) {
   return db
     .prepare(
       `SELECT d.id AS developer_id,
-              COALESCE(SUM(pr.amount * pd.share_percent / 100.0), 0) AS income
+              COALESCE(SUM(pdr.amount), 0) AS income
        FROM developers d
-       LEFT JOIN project_developers pd ON pd.developer_id = d.id
-       LEFT JOIN project_revenue pr
-         ON pr.project_id = pd.project_id AND pr.year = ? AND pr.month = ?
+       LEFT JOIN project_developer_revenue pdr
+         ON pdr.developer_id = d.id AND pdr.year = ? AND pdr.month = ?
        GROUP BY d.id`
     )
     .all(year, month);
@@ -76,13 +75,11 @@ router.get('/developer/:id', (req, res) => {
 
     const incomeRow = db
       .prepare(
-        `SELECT COALESCE(SUM(pr.amount * pd.share_percent / 100.0), 0) AS income
-         FROM project_developers pd
-         JOIN project_revenue pr
-           ON pr.project_id = pd.project_id AND pr.year = ? AND pr.month = ?
-         WHERE pd.developer_id = ?`
+        `SELECT COALESCE(SUM(amount), 0) AS income
+         FROM project_developer_revenue
+         WHERE developer_id = ? AND year = ? AND month = ?`
       )
-      .get(year, month, developer.id);
+      .get(developer.id, year, month);
     const income = incomeRow ? incomeRow.income : 0;
 
     const costRow = db

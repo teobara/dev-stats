@@ -73,7 +73,6 @@ export default function DeveloperDetail() {
             {developer.projects.map((p) => (
               <li key={p.id}>
                 <Link to={`/projects/${p.id}`}>{p.name}</Link>
-                <span className="muted"> - {p.share_percent}% din venitul proiectului</span>
               </li>
             ))}
           </ul>

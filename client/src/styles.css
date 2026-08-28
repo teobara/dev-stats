@@ -369,6 +369,19 @@ button {
   border-bottom: none;
 }
 
+.list-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.total-row td {
+  font-weight: 700;
+  border-top: 2px solid var(--border);
+  border-bottom: 2px solid var(--border);
+}
+
 .month-picker {
   display: flex;
   align-items: center;

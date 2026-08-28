@@ -63,6 +63,8 @@ db.exec(`
     UNIQUE(project_id, developer_id)
   );
 
+  -- Vechi (nu se mai scrie): un singur venit total per proiect/luna, impartit
+  -- dupa share_percent. Pastrat doar pentru migrarea datelor vechi, mai jos.
   CREATE TABLE IF NOT EXISTS project_revenue (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     project_id INTEGER NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
@@ -71,6 +73,20 @@ db.exec(`
     amount REAL NOT NULL DEFAULT 0,
     note TEXT,
     UNIQUE(project_id, year, month)
+  );
+
+  -- Model curent: suma introdusa manual, separat pentru fiecare programator
+  -- alocat pe proiect, in fiecare luna. Un proiect cu mai multi programatori
+  -- are mai multe randuri (unul per programator) pentru aceeasi luna.
+  CREATE TABLE IF NOT EXISTS project_developer_revenue (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    project_id INTEGER NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
+    developer_id INTEGER NOT NULL REFERENCES developers(id) ON DELETE CASCADE,
+    year INTEGER NOT NULL,
+    month INTEGER NOT NULL,
+    amount REAL NOT NULL DEFAULT 0,
+    note TEXT,
+    UNIQUE(project_id, developer_id, year, month)
   );
 
   CREATE TABLE IF NOT EXISTS developer_cost (
@@ -103,6 +119,48 @@ db.exec(`
   CREATE INDEX IF NOT EXISTS idx_pr_project_period ON project_revenue(project_id, year, month);
   CREATE INDEX IF NOT EXISTS idx_dc_developer_period ON developer_cost(developer_id, year, month);
   CREATE INDEX IF NOT EXISTS idx_sessions_user ON sessions(user_id);
+  CREATE INDEX IF NOT EXISTS idx_pdr_project_period ON project_developer_revenue(project_id, year, month);
+  CREATE INDEX IF NOT EXISTS idx_pdr_developer_period ON project_developer_revenue(developer_id, year, month);
 `);
+
+// Migrare unica (aditiva, sigura): modelul vechi avea o singura suma de venit
+// per proiect/luna, impartita intre programatori dupa share_percent. Convertim
+// orice date vechi in noul model (suma separata per programator), fara sa
+// stergem nimic din tabelele vechi. E sigur sa ruleze la fiecare pornire -
+// INSERT OR IGNORE + cheia unica (proiect, programator, an, luna) fac ca o
+// inregistrare deja migrata (sau introdusa manual) sa nu fie niciodata suprascrisa.
+const oldRevenueRows = db.prepare('SELECT * FROM project_revenue').all();
+if (oldRevenueRows.length > 0) {
+  const insertMigrated = db.prepare(
+    `INSERT OR IGNORE INTO project_developer_revenue (project_id, developer_id, year, month, amount, note)
+     VALUES (?, ?, ?, ?, ?, ?)`
+  );
+  const getAssignments = db.prepare(
+    'SELECT developer_id, share_percent FROM project_developers WHERE project_id = ?'
+  );
+
+  let migratedCount = 0;
+  for (const row of oldRevenueRows) {
+    for (const a of getAssignments.all(row.project_id)) {
+      const amount = row.amount * (a.share_percent / 100);
+      if (amount > 0) {
+        const info = insertMigrated.run(
+          row.project_id,
+          a.developer_id,
+          row.year,
+          row.month,
+          amount,
+          row.note
+        );
+        // info.changes e 0 daca randul exista deja (INSERT OR IGNORE) - numaram
+        // doar insertiile chiar noi, ca sa nu raportam aceleasi date la fiecare pornire.
+        if (info.changes > 0) migratedCount += 1;
+      }
+    }
+  }
+  if (migratedCount > 0) {
+    console.log(`Migrare: ${migratedCount} venituri vechi convertite la noul model (suma per programator).`);
+  }
+}
 
 module.exports = db;

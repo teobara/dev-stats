@@ -21,20 +21,20 @@ function upsertProject(name, client, description) {
   return db.prepare('SELECT * FROM projects WHERE id = ?').get(info.lastInsertRowid);
 }
 
-function assign(projectId, developerId, sharePercent) {
+function assign(projectId, developerId) {
   db.prepare(
-    `INSERT INTO project_developers (project_id, developer_id, share_percent)
-     VALUES (?, ?, ?)
-     ON CONFLICT(project_id, developer_id) DO UPDATE SET share_percent = excluded.share_percent`
-  ).run(projectId, developerId, sharePercent);
+    `INSERT INTO project_developers (project_id, developer_id)
+     VALUES (?, ?)
+     ON CONFLICT(project_id, developer_id) DO NOTHING`
+  ).run(projectId, developerId);
 }
 
-function setRevenue(projectId, year, month, amount) {
+function setRevenue(projectId, developerId, year, month, amount) {
   db.prepare(
-    `INSERT INTO project_revenue (project_id, year, month, amount)
-     VALUES (?, ?, ?, ?)
-     ON CONFLICT(project_id, year, month) DO UPDATE SET amount = excluded.amount`
-  ).run(projectId, year, month, amount);
+    `INSERT INTO project_developer_revenue (project_id, developer_id, year, month, amount)
+     VALUES (?, ?, ?, ?, ?)
+     ON CONFLICT(project_id, developer_id, year, month) DO UPDATE SET amount = excluded.amount`
+  ).run(projectId, developerId, year, month, amount);
 }
 
 function setCost(developerId, year, month, amount) {
@@ -53,10 +53,12 @@ const magazin = upsertProject('Magazin online ACME', 'ACME SRL', 'Platforma de e
 const crm = upsertProject('CRM Beta', 'Beta Consulting', 'Aplicatie interna de CRM');
 const site = upsertProject('Site prezentare Gamma', 'Gamma SA', 'Website de prezentare');
 
-assign(magazin.id, ana.id, 50);
-assign(magazin.id, mihai.id, 50);
-assign(crm.id, radu.id, 100);
-assign(site.id, ana.id, 100);
+// Magazinul are doi programatori alocati - exact cazul cu sume multiple pe
+// acelasi proiect, fiecare cu suma lui separata.
+assign(magazin.id, ana.id);
+assign(magazin.id, mihai.id);
+assign(crm.id, radu.id);
+assign(site.id, ana.id);
 
 const now = new Date();
 for (let i = 2; i >= 0; i--) {
@@ -64,9 +66,10 @@ for (let i = 2; i >= 0; i--) {
   const year = d.getFullYear();
   const month = d.getMonth() + 1;
 
-  setRevenue(magazin.id, year, month, 12000);
-  setRevenue(crm.id, year, month, 6000);
-  setRevenue(site.id, year, month, 2500);
+  setRevenue(magazin.id, ana.id, year, month, 7000);
+  setRevenue(magazin.id, mihai.id, year, month, 5000);
+  setRevenue(crm.id, radu.id, year, month, 6000);
+  setRevenue(site.id, ana.id, year, month, 2500);
 
   setCost(ana.id, year, month, 4500);
   setCost(mihai.id, year, month, 5000);

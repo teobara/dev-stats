@@ -11,21 +11,18 @@ Aplicație web pentru gestionarea programatorilor, proiectelor și profitului lu
 3. **Dashboard lunar** — pentru orice lună selectată, vezi câți bani ai încasat, cât ai cheltuit și ce profit a generat **fiecare programator**.
 4. **Cost lunar per programator** — pe pagina fiecărui programator, adaugi cât îl costă lunar (salariu/plată) firma; aplicația calculează automat **profit = venit atribuit − cost**.
 
-## Modelul de date — o presupunere importantă de validat
+## Modelul de date
 
-Un proiect poate avea **mai mulți programatori**. Ca să știm cât din venitul lunar al unui proiect
-"aparține" fiecărui programator (pentru calculul veniturilor lui personale), fiecare alocare
-programator↔proiect are un **procent (`share_percent`)**.
+Un proiect poate avea **mai mulți programatori** alocați. Pentru fiecare programator alocat pe un
+proiect, introduci **manual o sumă separată, în fiecare lună** — nu un total împărțit automat pe
+procente. Un proiect cu 2 programatori are 2 sume distincte pentru aceeași lună (una per
+programator), plus un total afișat automat pe pagina proiectului.
 
-- Dacă un proiect are un singur programator, procentul lui e implicit **100%**.
-- Dacă are mai mulți, poți seta manual procentul fiecăruia (ex: 60% / 40%), pe pagina proiectului.
-- Venitul lunar atribuit unui programator = suma, pe toate proiectele lui, din `venit_lunar_proiect × procent_alocat`.
-- Acest procent este fix (nu variază automat de la o lună la alta) — dacă un programator lucrează
-  diferit ca implicare de la o lună la alta pe același proiect, procentul trebuie ajustat manual.
+Venitul lunar atribuit unui programator (folosit pe Dashboard și pe pagina lui) = suma tuturor
+sumelor introduse pentru el, pe toate proiectele lui, în luna respectivă.
 
-Dacă nu asta ai avut în minte (de exemplu, ai vrea introducere manuală a sumei exacte per
-programator/proiect/lună, în loc de procent), spune-mi și ajustez modelul — e o schimbare
-localizată, nu afectează restul aplicației.
+*(Notă istorică: o versiune anterioară folosea un procent de împărțire automată a unui singur
+total pe proiect — s-a renunțat la asta, era ambiguu când un proiect avea mai mulți programatori.)*
 
 ## Structura proiectului
 
