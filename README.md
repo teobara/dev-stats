@@ -9,7 +9,8 @@ Aplicație web pentru gestionarea programatorilor, proiectelor și profitului lu
 1. **Programatori** — adaugi/editezi/ștergi programatori (nume, rol/tehnologie, email).
 2. **Proiecte** — creezi proiecte, aloci unul sau mai mulți programatori pe fiecare proiect și înregistrezi **venitul încasat lunar** pentru acel proiect.
 3. **Dashboard lunar** — pentru orice lună selectată, vezi câți bani ai încasat, cât ai cheltuit și ce profit a generat **fiecare programator**.
-4. **Cost lunar per programator** — pe pagina fiecărui programator, adaugi cât îl costă lunar (salariu/plată) firma; aplicația calculează automat **profit = venit atribuit − cost**.
+4. **Cost lunar per programator** — o singură sumă **fixă**, per programator (nu variază de la o
+   lună la alta); aplicația calculează automat **profit = venit atribuit − cost**, în fiecare lună.
 
 ## Modelul de date
 
@@ -21,8 +22,14 @@ programator), plus un total afișat automat pe pagina proiectului.
 Venitul lunar atribuit unui programator (folosit pe Dashboard și pe pagina lui) = suma tuturor
 sumelor introduse pentru el, pe toate proiectele lui, în luna respectivă.
 
+Costul lunar al unui programator (`monthly_cost`, pe tabela `developers`) e **o singură valoare
+fixă**, nu una pe lună — o schimbi oricând de pe pagina programatorului, iar noua valoare se
+aplică din acel moment în toate calculele (inclusiv pe lunile trecute afișate — nu există un
+istoric separat al costurilor, e mereu valoarea curentă).
+
 *(Notă istorică: o versiune anterioară folosea un procent de împărțire automată a unui singur
-total pe proiect — s-a renunțat la asta, era ambiguu când un proiect avea mai mulți programatori.)*
+total pe proiect, și un cost setat separat pe fiecare lună — s-a renunțat la ambele, pentru un
+model mai simplu și mai direct.)*
 
 ## Structura proiectului
 

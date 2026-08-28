@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { api } from '../api.js';
+import { formatMoney } from '../format.js';
 
-const emptyForm = { name: '', role: '', email: '' };
+const emptyForm = { name: '', role: '', email: '', monthly_cost: '' };
 
 export default function Developers() {
   const [developers, setDevelopers] = useState([]);
@@ -25,7 +26,10 @@ export default function Developers() {
     e.preventDefault();
     if (!form.name.trim()) return;
     try {
-      await api.createDeveloper(form);
+      await api.createDeveloper({
+        ...form,
+        monthly_cost: Number(form.monthly_cost) || 0,
+      });
       setForm(emptyForm);
       load();
     } catch (err) {
@@ -43,7 +47,7 @@ export default function Developers() {
   }
 
   async function remove(dev) {
-    if (!window.confirm(`Stergi programatorul "${dev.name}"? Se sterg si alocarile si costurile lui.`)) return;
+    if (!window.confirm(`Stergi programatorul "${dev.name}"? Se sterg si alocarile si veniturile lui.`)) return;
     try {
       await api.deleteDeveloper(dev.id);
       load();
@@ -79,6 +83,13 @@ export default function Developers() {
             value={form.email}
             onChange={(e) => setForm({ ...form, email: e.target.value })}
           />
+          <input
+            type="number"
+            placeholder="Cost lunar (EUR)"
+            value={form.monthly_cost}
+            onChange={(e) => setForm({ ...form, monthly_cost: e.target.value })}
+            style={{ width: '9rem' }}
+          />
           <button type="submit" className="btn-primary">
             Adauga
           </button>
@@ -98,6 +109,7 @@ export default function Developers() {
                   <th>Nume</th>
                   <th>Rol</th>
                   <th>Email</th>
+                  <th>Cost lunar</th>
                   <th>Status</th>
                   <th></th>
                 </tr>
@@ -110,6 +122,7 @@ export default function Developers() {
                     </td>
                     <td className="muted">{dev.role || '-'}</td>
                     <td className="muted">{dev.email || '-'}</td>
+                    <td>{formatMoney(dev.monthly_cost)}</td>
                     <td>
                       <button type="button" className="badge-btn" onClick={() => toggleActive(dev)}>
                         {dev.active ? 'Activ' : 'Inactiv'}

@@ -45,6 +45,9 @@ db.exec(`
     created_at TEXT NOT NULL DEFAULT (datetime('now'))
   );
 
+  -- monthly_cost e adaugata separat mai jos (ALTER TABLE), ca sa mearga si pe
+  -- o baza de date creata cu un schema mai vechi, fara aceasta coloana.
+
   CREATE TABLE IF NOT EXISTS projects (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     name TEXT NOT NULL,
@@ -89,6 +92,8 @@ db.exec(`
     UNIQUE(project_id, developer_id, year, month)
   );
 
+  -- Vechi (nu se mai scrie): cost diferit per luna. Inlocuit cu developers.monthly_cost,
+  -- un singur cost fix per programator. Pastrat doar pentru migrarea datelor vechi.
   CREATE TABLE IF NOT EXISTS developer_cost (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     developer_id INTEGER NOT NULL REFERENCES developers(id) ON DELETE CASCADE,
@@ -161,6 +166,38 @@ if (oldRevenueRows.length > 0) {
   if (migratedCount > 0) {
     console.log(`Migrare: ${migratedCount} venituri vechi convertite la noul model (suma per programator).`);
   }
+}
+
+// Migrare unica: adauga coloana developers.monthly_cost, daca nu exista deja
+// (baza de date creata cu un schema mai vechi). Costul nu se mai seteaza pe
+// luna - e o singura valoare fixa per programator, editabila oricand.
+// Se ruleaza o singura data: la pornirile urmatoare, coloana deja exista si
+// blocul intreg e sarit, deci nu suprascrie niciodata o valoare setata manual.
+const developerColumns = db.prepare('PRAGMA table_info(developers)').all();
+const hasMonthlyCost = developerColumns.some((c) => c.name === 'monthly_cost');
+if (!hasMonthlyCost) {
+  db.exec('ALTER TABLE developers ADD COLUMN monthly_cost REAL NOT NULL DEFAULT 0');
+
+  // Ca valoare initiala, preluam cel mai recent cost lunar introdus manual
+  // (din vechiul model, per programator), daca exista.
+  const developerIds = db.prepare('SELECT id FROM developers').all();
+  const getLatestCost = db.prepare(
+    'SELECT amount FROM developer_cost WHERE developer_id = ? ORDER BY year DESC, month DESC LIMIT 1'
+  );
+  const setInitialCost = db.prepare('UPDATE developers SET monthly_cost = ? WHERE id = ?');
+
+  let seeded = 0;
+  for (const { id } of developerIds) {
+    const latest = getLatestCost.get(id);
+    if (latest) {
+      setInitialCost.run(latest.amount, id);
+      seeded += 1;
+    }
+  }
+  console.log(
+    `Migrare: adaugata coloana developers.monthly_cost` +
+      (seeded > 0 ? ` (preluata din istoric pentru ${seeded} programatori).` : '.')
+  );
 }
 
 module.exports = db;

@@ -33,10 +33,6 @@ export const api = {
   updateDeveloper: (id, data) =>
     request(`/developers/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
   deleteDeveloper: (id) => request(`/developers/${id}`, { method: 'DELETE' }),
-  setDeveloperCost: (id, data) =>
-    request(`/developers/${id}/cost`, { method: 'PUT', body: JSON.stringify(data) }),
-  deleteDeveloperCost: (id, year, month) =>
-    request(`/developers/${id}/cost/${year}/${month}`, { method: 'DELETE' }),
 
   getProjects: () => request('/projects'),
   getProject: (id) => request(`/projects/${id}`),

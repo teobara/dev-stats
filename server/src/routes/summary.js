@@ -27,14 +27,9 @@ router.get('/', (req, res) => {
     monthlyIncomeByDeveloper(year, month).map((row) => [row.developer_id, row.income])
   );
 
-  const costRows = db
-    .prepare('SELECT developer_id, amount FROM developer_cost WHERE year = ? AND month = ?')
-    .all(year, month);
-  const costByDev = new Map(costRows.map((row) => [row.developer_id, row.amount]));
-
   const rows = developers.map((dev) => {
     const income = incomeByDev.get(dev.id) || 0;
-    const cost = costByDev.get(dev.id) || 0;
+    const cost = dev.monthly_cost || 0;
     return {
       developer_id: dev.id,
       name: dev.name,
@@ -81,11 +76,7 @@ router.get('/developer/:id', (req, res) => {
       )
       .get(developer.id, year, month);
     const income = incomeRow ? incomeRow.income : 0;
-
-    const costRow = db
-      .prepare('SELECT amount FROM developer_cost WHERE developer_id = ? AND year = ? AND month = ?')
-      .get(developer.id, year, month);
-    const cost = costRow ? costRow.amount : 0;
+    const cost = developer.monthly_cost || 0;
 
     points.push({ year, month, income, cost, profit: income - cost });
   }

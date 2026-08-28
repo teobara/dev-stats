@@ -3,24 +3,23 @@ import { useParams, Link, useNavigate } from 'react-router-dom';
 import { api } from '../api.js';
 import { formatMoney, monthLabel } from '../format.js';
 
-const now = new Date();
-const emptyCostForm = {
-  year: now.getFullYear(),
-  month: now.getMonth() + 1,
-  amount: '',
-  note: '',
-};
-
 export default function DeveloperDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
   const [developer, setDeveloper] = useState(null);
   const [trend, setTrend] = useState(null);
-  const [costForm, setCostForm] = useState(emptyCostForm);
+  const [costInput, setCostInput] = useState('');
+  const [savingCost, setSavingCost] = useState(false);
   const [error, setError] = useState('');
 
   function load() {
-    api.getDeveloper(id).then(setDeveloper).catch((err) => setError(err.message));
+    api
+      .getDeveloper(id)
+      .then((d) => {
+        setDeveloper(d);
+        setCostInput(String(d.monthly_cost ?? 0));
+      })
+      .catch((err) => setError(err.message));
     api.getDeveloperTrend(id, 12).then(setTrend).catch((err) => setError(err.message));
   }
 
@@ -28,15 +27,14 @@ export default function DeveloperDetail() {
 
   async function handleCostSubmit(e) {
     e.preventDefault();
+    setSavingCost(true);
     try {
-      await api.setDeveloperCost(id, {
-        ...costForm,
-        amount: Number(costForm.amount) || 0,
-      });
-      setCostForm({ ...emptyCostForm, year: costForm.year, month: costForm.month });
+      await api.updateDeveloper(id, { monthly_cost: Number(costInput) || 0 });
       load();
     } catch (err) {
       setError(err.message);
+    } finally {
+      setSavingCost(false);
     }
   }
 
@@ -80,47 +78,29 @@ export default function DeveloperDetail() {
       </div>
 
       <div className="card">
-        <h2>Adauga cost lunar</h2>
+        <h2>Cost lunar</h2>
         <p className="muted">
-          Suma platita acestui programator (salariu, colaborare etc.) pentru luna selectata.
+          O singura suma, fixa — cat costa firma lunar acest programator (salariu, colaborare
+          etc.). Nu variaza de la o luna la alta; o poti schimba oricand aici.
         </p>
         <form className="inline-form" onSubmit={handleCostSubmit}>
-          <select
-            value={costForm.month}
-            onChange={(e) => setCostForm({ ...costForm, month: Number(e.target.value) })}
-          >
-            {Array.from({ length: 12 }, (_, i) => i + 1).map((m) => (
-              <option key={m} value={m}>
-                {monthLabel(m)}
-              </option>
-            ))}
-          </select>
-          <input
-            type="number"
-            value={costForm.year}
-            onChange={(e) => setCostForm({ ...costForm, year: Number(e.target.value) })}
-            style={{ width: '6rem' }}
-          />
           <input
             type="number"
             placeholder="Suma (EUR)"
-            value={costForm.amount}
-            onChange={(e) => setCostForm({ ...costForm, amount: e.target.value })}
+            value={costInput}
+            onChange={(e) => setCostInput(e.target.value)}
+            style={{ width: '10rem' }}
             required
           />
-          <input
-            placeholder="Nota (optional)"
-            value={costForm.note}
-            onChange={(e) => setCostForm({ ...costForm, note: e.target.value })}
-          />
-          <button type="submit" className="btn-primary">
-            Salveaza
+          <button type="submit" className="btn-primary" disabled={savingCost}>
+            {savingCost ? 'Se salveaza...' : 'Salveaza'}
           </button>
         </form>
       </div>
 
       <div className="card">
-        <h2>Venit, cost si profit lunar (ultimele 12 luni)</h2>
+        <h2>Venit si profit lunar (ultimele 12 luni)</h2>
+        <p className="muted">Costul e acelasi in fiecare luna — vezi mai sus cum il schimbi.</p>
         <div className="table-wrap">
           <table>
             <thead>

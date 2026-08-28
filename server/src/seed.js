@@ -3,12 +3,12 @@
 require('dotenv').config();
 const db = require('./db');
 
-function upsertDeveloper(name, role, email) {
+function upsertDeveloper(name, role, email, monthlyCost) {
   const existing = db.prepare('SELECT * FROM developers WHERE name = ?').get(name);
   if (existing) return existing;
   const info = db
-    .prepare('INSERT INTO developers (name, role, email) VALUES (?, ?, ?)')
-    .run(name, role, email);
+    .prepare('INSERT INTO developers (name, role, email, monthly_cost) VALUES (?, ?, ?, ?)')
+    .run(name, role, email, monthlyCost);
   return db.prepare('SELECT * FROM developers WHERE id = ?').get(info.lastInsertRowid);
 }
 
@@ -37,17 +37,10 @@ function setRevenue(projectId, developerId, year, month, amount) {
   ).run(projectId, developerId, year, month, amount);
 }
 
-function setCost(developerId, year, month, amount) {
-  db.prepare(
-    `INSERT INTO developer_cost (developer_id, year, month, amount)
-     VALUES (?, ?, ?, ?)
-     ON CONFLICT(developer_id, year, month) DO UPDATE SET amount = excluded.amount`
-  ).run(developerId, year, month, amount);
-}
-
-const ana = upsertDeveloper('Ana Popescu', 'Frontend (React)', 'ana@example.com');
-const mihai = upsertDeveloper('Mihai Ionescu', 'Backend (Node.js)', 'mihai@example.com');
-const radu = upsertDeveloper('Radu Stan', 'Full-stack', 'radu@example.com');
+// Costul e fix per programator (nu se mai seteaza pe luna).
+const ana = upsertDeveloper('Ana Popescu', 'Frontend (React)', 'ana@example.com', 4500);
+const mihai = upsertDeveloper('Mihai Ionescu', 'Backend (Node.js)', 'mihai@example.com', 5000);
+const radu = upsertDeveloper('Radu Stan', 'Full-stack', 'radu@example.com', 4800);
 
 const magazin = upsertProject('Magazin online ACME', 'ACME SRL', 'Platforma de e-commerce');
 const crm = upsertProject('CRM Beta', 'Beta Consulting', 'Aplicatie interna de CRM');
@@ -70,10 +63,6 @@ for (let i = 2; i >= 0; i--) {
   setRevenue(magazin.id, mihai.id, year, month, 5000);
   setRevenue(crm.id, radu.id, year, month, 6000);
   setRevenue(site.id, ana.id, year, month, 2500);
-
-  setCost(ana.id, year, month, 4500);
-  setCost(mihai.id, year, month, 5000);
-  setCost(radu.id, year, month, 4800);
 }
 
 console.log('Date de test adaugate cu succes.');

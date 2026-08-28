@@ -18,13 +18,14 @@ router.get('/', (req, res) => {
 });
 
 router.post('/', (req, res) => {
-  const { name, role, email } = req.body;
+  const { name, role, email, monthly_cost } = req.body;
   if (!name || !name.trim()) {
     return res.status(400).json({ error: 'Numele este obligatoriu.' });
   }
+  const cost = monthly_cost !== undefined ? Number(monthly_cost) || 0 : 0;
   const info = db
-    .prepare('INSERT INTO developers (name, role, email) VALUES (?, ?, ?)')
-    .run(name.trim(), role || null, email || null);
+    .prepare('INSERT INTO developers (name, role, email, monthly_cost) VALUES (?, ?, ?, ?)')
+    .run(name.trim(), role || null, email || null, cost);
   const developer = db.prepare('SELECT * FROM developers WHERE id = ?').get(info.lastInsertRowid);
   res.status(201).json(developer);
 });
@@ -50,14 +51,15 @@ router.put('/:id', (req, res) => {
   const developer = getDeveloperOr404(req, res);
   if (!developer) return;
 
-  const { name, role, email, active } = req.body;
+  const { name, role, email, active, monthly_cost } = req.body;
   db.prepare(
-    `UPDATE developers SET name = ?, role = ?, email = ?, active = ? WHERE id = ?`
+    `UPDATE developers SET name = ?, role = ?, email = ?, active = ?, monthly_cost = ? WHERE id = ?`
   ).run(
     name !== undefined ? name.trim() : developer.name,
     role !== undefined ? role : developer.role,
     email !== undefined ? email : developer.email,
     active !== undefined ? (active ? 1 : 0) : developer.active,
+    monthly_cost !== undefined ? Number(monthly_cost) || 0 : developer.monthly_cost,
     developer.id
   );
 
@@ -68,50 +70,6 @@ router.delete('/:id', (req, res) => {
   const developer = getDeveloperOr404(req, res);
   if (!developer) return;
   db.prepare('DELETE FROM developers WHERE id = ?').run(developer.id);
-  res.status(204).end();
-});
-
-router.get('/:id/cost', (req, res) => {
-  const developer = getDeveloperOr404(req, res);
-  if (!developer) return;
-  const rows = db
-    .prepare('SELECT * FROM developer_cost WHERE developer_id = ? ORDER BY year DESC, month DESC')
-    .all(developer.id);
-  res.json(rows);
-});
-
-router.put('/:id/cost', (req, res) => {
-  const developer = getDeveloperOr404(req, res);
-  if (!developer) return;
-
-  const { year, month, amount, note } = req.body;
-  const y = Number(year);
-  const m = Number(month);
-  const a = Number(amount);
-
-  if (!Number.isInteger(y) || !Number.isInteger(m) || m < 1 || m > 12 || Number.isNaN(a)) {
-    return res.status(400).json({ error: 'An/luna/suma invalide.' });
-  }
-
-  db.prepare(
-    `INSERT INTO developer_cost (developer_id, year, month, amount, note)
-     VALUES (?, ?, ?, ?, ?)
-     ON CONFLICT(developer_id, year, month)
-     DO UPDATE SET amount = excluded.amount, note = excluded.note`
-  ).run(developer.id, y, m, a, note || null);
-
-  const row = db
-    .prepare('SELECT * FROM developer_cost WHERE developer_id = ? AND year = ? AND month = ?')
-    .get(developer.id, y, m);
-  res.json(row);
-});
-
-router.delete('/:id/cost/:year/:month', (req, res) => {
-  const developer = getDeveloperOr404(req, res);
-  if (!developer) return;
-  db.prepare(
-    'DELETE FROM developer_cost WHERE developer_id = ? AND year = ? AND month = ?'
-  ).run(developer.id, Number(req.params.year), Number(req.params.month));
   res.status(204).end();
 });
 
