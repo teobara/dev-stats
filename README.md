@@ -115,11 +115,14 @@ sesiune veche activă a acelui cont).
    (fie printr-un repo Git pe GitHub, fie cu `railway up` din CLI).
 2. Railway detectează automat Node.js (Nixpacks), rulează `npm install` → `npm run build` →
    `npm run start`. Nu trebuie configurat nimic suplimentar pentru build.
-3. **Adaugă un Volume** (Railway → serviciul tău → tab *Volumes*), montat de exemplu la `/data`.
-   Baza de date SQLite trebuie să stea pe acest disc persistent, altfel se pierde la fiecare
-   redeploy.
+3. **Adaugă un Volume**, montat la `/data`. Interfața Railway s-a schimbat de-a lungul timpului;
+   la data asta, cel mai sigur mod e din Command Palette (`Ctrl+K` în dashboard → caută „volume”)
+   sau click-dreapta pe canvas-ul proiectului. Baza de date SQLite trebuie să stea pe acest disc
+   persistent, altfel **se pierde la fiecare redeploy** (inclusiv toți programatorii/proiectele
+   introduse).
 4. Setează variabilele de mediu ale serviciului:
-   - `DB_PATH=/data/dev.sqlite` (calea către fișierul SQLite, pe volumul montat la pasul 3)
+   - `DB_PATH=/data/dev.sqlite` (calea către fișierul SQLite, pe volumul montat la pasul 3 — trebuie
+     să fie exact în interiorul mount path-ului volumului, altfel tot nu persistă)
    - `BOOTSTRAP_USERNAME=Teo` și `BOOTSTRAP_PASSWORD=parola-ta` — la prima pornire, serverul
      creează automat acest utilizator dacă nu există deja. E sigur să lași aceste două variabile
      setate permanent: la orice restart ulterior, dacă utilizatorul deja există, nu se întâmplă
@@ -133,6 +136,24 @@ poți crea/reseta un utilizator direct, fără variabile de bootstrap:
 ```bash
 railway run node server/src/set-password.js Teo
 ```
+
+### Cum verifici că volumul chiar persistă (nu doar că pare configurat)
+
+La fiecare pornire, serverul scrie clar în log-uri (Railway → serviciul tău → tab *Deployments* →
+deploy-ul curent → *View Logs*) ce cale de bază de date folosește:
+
+- `ATENTIE: variabila DB_PATH nu e setata...` → variabila nu e citită de service (verifică
+  Variables).
+- `Niciun fisier existent la ... - se creeaza o baza de date noua, goala.` → **acesta e semnul că
+  datele NU persistă**. Dacă vezi mesajul ăsta la un redeploy (nu la primul deploy vreodată),
+  volumul nu e montat corect la calea din `DB_PATH`.
+- `Fisier baza de date existent, gasit la: ...` → totul e în regulă, datele s-au păstrat.
+
+### Backup manual
+
+Din aplicație (buton „Backup” din bara de sus, după login) sau direct la `/api/backup`, poți
+descărca oricând toate datele (programatori, proiecte, alocări, venituri, costuri) ca fișier JSON.
+Recomandat înainte de orice schimbare majoră de configurare pe Railway.
 
 ## Limitări cunoscute / posibile extinderi viitoare
 

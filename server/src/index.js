@@ -9,6 +9,7 @@ const authRouter = require('./routes/auth');
 const developersRouter = require('./routes/developers');
 const projectsRouter = require('./routes/projects');
 const summaryRouter = require('./routes/summary');
+const backupRouter = require('./routes/backup');
 
 runBootstrap();
 
@@ -31,6 +32,7 @@ app.get('/api/health', (req, res) => res.json({ ok: true }));
 app.use('/api/developers', requireAuth, developersRouter);
 app.use('/api/projects', requireAuth, projectsRouter);
 app.use('/api/summary', requireAuth, summaryRouter);
+app.use('/api/backup', requireAuth, backupRouter);
 
 // In productie servim buildul React direct din acest server (un singur serviciu pe Railway)
 app.use(express.static(CLIENT_DIST));

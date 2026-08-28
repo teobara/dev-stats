@@ -5,9 +5,28 @@ const { DatabaseSync } = require('node:sqlite');
 const DEFAULT_DB_PATH = path.join(__dirname, '..', 'data', 'dev.sqlite');
 const dbPath = process.env.DB_PATH || DEFAULT_DB_PATH;
 
+// Avertisment explicit daca DB_PATH nu e setat: inseamna ca baza de date sta pe
+// discul efemer al containerului si se va pierde la urmatorul deploy/restart.
+// Vezi acest mesaj in log-urile de deploy de pe Railway ca sa confirmi ce cale se foloseste.
+if (!process.env.DB_PATH) {
+  console.warn(
+    'ATENTIE: variabila DB_PATH nu e setata. Baza de date NU e persistenta ' +
+      `si se va pierde la urmatorul deploy/restart. Foloseste calea implicita: ${dbPath}`
+  );
+} else {
+  console.log(`DB_PATH setat - se foloseste: ${dbPath}`);
+}
+
 // Ne asiguram ca directorul in care va sta fisierul .sqlite exista
 // (util mai ales pe Railway, unde DB_PATH poate indica spre un volume montat, ex: /data/dev.sqlite)
 fs.mkdirSync(path.dirname(dbPath), { recursive: true });
+
+const dbFileExistedBefore = fs.existsSync(dbPath);
+console.log(
+  dbFileExistedBefore
+    ? `Fisier baza de date existent, gasit la: ${dbPath}`
+    : `Niciun fisier existent la ${dbPath} - se creeaza o baza de date noua, goala.`
+);
 
 // Folosim modulul SQLite integrat in Node.js (node:sqlite, stabil incepand cu Node 22.5+)
 // in loc de un pachet extern precum better-sqlite3, ca sa evitam compilarea nativa

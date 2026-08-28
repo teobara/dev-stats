@@ -17,6 +17,9 @@ export default function NavBar({ user, onLogout }) {
       </nav>
       <div className="navbar-user">
         {user && <span className="muted">{user.username}</span>}
+        <a className="btn-link" href="/api/backup" download title="Descarca toate datele ca fisier JSON">
+          Backup
+        </a>
         <button type="button" className="btn-link" onClick={onLogout}>
           Deconectare
         </button>
