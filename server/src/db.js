@@ -64,10 +64,26 @@ db.exec(`
     UNIQUE(developer_id, year, month)
   );
 
+  CREATE TABLE IF NOT EXISTS users (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    username TEXT NOT NULL UNIQUE,
+    password_hash TEXT NOT NULL,
+    password_salt TEXT NOT NULL,
+    created_at TEXT NOT NULL DEFAULT (datetime('now'))
+  );
+
+  CREATE TABLE IF NOT EXISTS sessions (
+    token TEXT PRIMARY KEY,
+    user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    created_at TEXT NOT NULL DEFAULT (datetime('now')),
+    expires_at TEXT NOT NULL
+  );
+
   CREATE INDEX IF NOT EXISTS idx_pd_project ON project_developers(project_id);
   CREATE INDEX IF NOT EXISTS idx_pd_developer ON project_developers(developer_id);
   CREATE INDEX IF NOT EXISTS idx_pr_project_period ON project_revenue(project_id, year, month);
   CREATE INDEX IF NOT EXISTS idx_dc_developer_period ON developer_cost(developer_id, year, month);
+  CREATE INDEX IF NOT EXISTS idx_sessions_user ON sessions(user_id);
 `);
 
 module.exports = db;

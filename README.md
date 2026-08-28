@@ -35,9 +35,10 @@ DevStats/
 │   ├── src/
 │   │   ├── index.js     # punct de intrare: rute API + servește build-ul React în producție
 │   │   ├── db.js        # schema SQLite (creată automat la prima pornire)
-│   │   ├── auth.js      # protecție opțională cu parolă (Basic Auth)
+│   │   ├── set-password.js # creeaza/reseteaza parola unui utilizator (CLI)
 │   │   ├── seed.js       # date de test opționale
-│   │   └── routes/       # developers.js, projects.js, summary.js
+│   │   ├── middleware/auth.js # sesiune (cookie) + protecția rutelor
+│   │   └── routes/       # auth.js, developers.js, projects.js, summary.js
 │   └── data/             # fișierul .sqlite local (ignorat de git)
 ├── client/               # React (Vite)
 │   └── src/
@@ -84,17 +85,29 @@ npm start       # pornește Express pe portul din variabila PORT (implicit 4000)
 În producție, Express servește direct fișierele React din `client/dist` — un singur proces, un
 singur port.
 
-## Protecție cu parolă (recomandat pentru online)
+## Autentificare
 
-Aplicația conține date financiare și, odată publicată pe Railway, e accesibilă de oricine are
-link-ul. Poți cere o parolă simplă (HTTP Basic Auth, aceeași pentru toată lumea) setând variabila
-de mediu:
+Aplicația are un sistem propriu de login (utilizator + parolă), nu doar o parolă comună. La prima
+încărcare, dacă nu ești autentificat, vezi ecranul de login; sesiunea se ține într-un cookie
+`httpOnly` (nu poate fi citit din JavaScript în browser) și expiră după 30 de zile.
 
+Parola nu e stocată niciodată în clar — doar hash (scrypt) + salt, în tabela `users` din SQLite.
+
+**Creezi/resetezi un utilizator** din linia de comandă (rulează din rădăcina proiectului):
+
+```bash
+node server/src/set-password.js Teo
 ```
-APP_PASSWORD=parola-ta-secreta
+
+Fără al treilea argument, se generează automat o parolă aleatoare și se afișează o singură dată în
+consolă. Poți și seta tu una explicit:
+
+```bash
+node server/src/set-password.js Teo parola-mea-noua
 ```
 
-Dacă nu setezi această variabilă (ex: local, în dezvoltare), aplicația nu cere nicio parolă.
+Rulând comanda din nou pentru același utilizator îi schimbă parola (și deconectează automat orice
+sesiune veche activă a acelui cont).
 
 ## Deploy pe Railway
 
@@ -105,15 +118,26 @@ Dacă nu setezi această variabilă (ex: local, în dezvoltare), aplicația nu c
 3. **Adaugă un Volume** (Railway → serviciul tău → tab *Volumes*), montat de exemplu la `/data`.
    Baza de date SQLite trebuie să stea pe acest disc persistent, altfel se pierde la fiecare
    redeploy.
-4. Setează variabilele de mediu ale serviciului:
+4. Setează variabila de mediu a serviciului:
    - `DB_PATH=/data/dev.sqlite` (calea către fișierul SQLite, pe volumul montat la pasul 3)
-   - `APP_PASSWORD=...` (opțional, dar recomandat — vezi secțiunea de mai sus)
 5. Deploy. Railway îți dă un URL public (`*.up.railway.app`), accesibil de pe orice dispozitiv.
+6. Creează utilizatorul de login direct pe baza de date de pe Railway — cel mai simplu e cu
+   `railway run`, din acest folder:
+
+   ```bash
+   railway run node server/src/set-password.js Teo
+   ```
+
+   Asta rulează scriptul cu variabilele de mediu ale serviciului Railway (deci scrie în `DB_PATH`
+   de pe volumul persistent), fără să publici parola nicăieri altundeva decât în terminalul tău.
 
 ## Limitări cunoscute / posibile extinderi viitoare
 
-- **Fără login per utilizator** — momentan e o singură parolă comună (Basic Auth), nu conturi
-  individuale. Dacă vrei acces diferențiat pe useri, e un pas suplimentar.
+- **Un singur nivel de acces** — orice utilizator autentificat vede tot (nu există roluri
+  admin/citire etc.). Pentru un instrument intern e suficient, dar e un pas suplimentar dacă vrei
+  permisiuni diferențiate.
+- **Fără "am uitat parola" din UI** — resetarea parolei se face din linia de comandă
+  (`set-password.js`), nu există flux de recuperare prin email.
 - **Procentul de alocare e static** — nu variază automat lună de lună (vezi secțiunea de model de
   date mai sus).
 - **Fără editare de sume trecute prin UI de tip "istoric audit"** — poți suprascrie o sumă lunară,

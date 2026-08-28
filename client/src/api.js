@@ -22,6 +22,11 @@ async function request(path, options = {}) {
 }
 
 export const api = {
+  login: (username, password) =>
+    request('/auth/login', { method: 'POST', body: JSON.stringify({ username, password }) }),
+  logout: () => request('/auth/logout', { method: 'POST' }),
+  me: () => request('/auth/me'),
+
   getDevelopers: () => request('/developers'),
   getDeveloper: (id) => request(`/developers/${id}`),
   createDeveloper: (data) => request('/developers', { method: 'POST', body: JSON.stringify(data) }),

@@ -6,7 +6,8 @@
   "scripts": {
     "start": "node src/index.js",
     "dev": "cross-env PORT=4000 nodemon src/index.js",
-    "seed": "node src/seed.js"
+    "seed": "node src/seed.js",
+    "set-password": "node src/set-password.js"
   },
   "dependencies": {
     "cors": "^2.8.5",
