@@ -200,7 +200,7 @@ export default function ProjectDetail() {
           />
           <input
             type="number"
-            placeholder="Suma incasata (RON)"
+            placeholder="Suma incasata (EUR)"
             value={revenueForm.amount}
             onChange={(e) => setRevenueForm({ ...revenueForm, amount: e.target.value })}
             required

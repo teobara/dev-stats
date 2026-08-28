@@ -145,4 +145,4 @@ railway run node server/src/set-password.js Teo
   date mai sus).
 - **Fără editare de sume trecute prin UI de tip "istoric audit"** — poți suprascrie o sumă lunară,
   dar nu există un jurnal al modificărilor.
-- **Monedă fixă (RON)** — ușor de schimbat în `client/src/format.js` dacă ai nevoie de altă monedă.
+- **Monedă fixă (EUR)** — ușor de schimbat în `client/src/format.js` dacă ai nevoie de altă monedă.

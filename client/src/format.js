@@ -7,7 +7,7 @@ export function formatMoney(value) {
   const n = Number(value) || 0;
   return new Intl.NumberFormat('ro-RO', {
     style: 'currency',
-    currency: 'RON',
+    currency: 'EUR',
     maximumFractionDigits: 0,
   }).format(n);
 }

@@ -104,7 +104,7 @@ export default function DeveloperDetail() {
           />
           <input
             type="number"
-            placeholder="Suma (RON)"
+            placeholder="Suma (EUR)"
             value={costForm.amount}
             onChange={(e) => setCostForm({ ...costForm, amount: e.target.value })}
             required
