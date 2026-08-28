@@ -30,7 +30,7 @@ localizată, nu afectează restul aplicației.
 ## Structura proiectului
 
 ```
-dev-profit-tracker/
+DevStats/
 ├── server/              # API Express + baza de date SQLite
 │   ├── src/
 │   │   ├── index.js     # punct de intrare: rute API + servește build-ul React în producție
