@@ -47,10 +47,12 @@ router.get('/', (req, res) => {
   const totals = rows.reduce(
     (acc, row) => ({
       income: acc.income + row.income,
+      income_target: acc.income_target + row.income_target,
+      income_vs_target: acc.income_vs_target + row.income_vs_target,
       cost: acc.cost + row.cost,
       profit: acc.profit + row.profit,
     }),
-    { income: 0, cost: 0, profit: 0 }
+    { income: 0, income_target: 0, income_vs_target: 0, cost: 0, profit: 0 }
   );
 
   res.json({ year, month, rows, totals });

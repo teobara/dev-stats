@@ -60,6 +60,11 @@ export default function Dashboard() {
         <>
           <div className="stat-row">
             <StatCard label="Venit total" value={formatMoney(data.totals.income)} />
+            <StatCard
+              label="Fata de tinta (total)"
+              value={formatSignedMoney(data.totals.income_vs_target)}
+              tone={data.totals.income_vs_target >= 0 ? 'positive' : 'negative'}
+            />
             <StatCard label="Cost total" value={formatMoney(data.totals.cost)} />
             <StatCard
               label="Profit total"
