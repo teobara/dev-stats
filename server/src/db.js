@@ -200,4 +200,13 @@ if (!hasMonthlyCost) {
   );
 }
 
+// Migrare unica: prag lunar de venit din proiecte, per programator (implicit
+// 8000 EUR - DEFAULT-ul din ALTER TABLE completeaza automat aceasta valoare
+// si pentru programatorii deja existenti). Editabil oricand, per programator.
+const hasRevenueTarget = developerColumns.some((c) => c.name === 'monthly_revenue_target');
+if (!hasRevenueTarget) {
+  db.exec('ALTER TABLE developers ADD COLUMN monthly_revenue_target REAL NOT NULL DEFAULT 8000');
+  console.log('Migrare: adaugata coloana developers.monthly_revenue_target (implicit 8000 EUR).');
+}
+
 module.exports = db;

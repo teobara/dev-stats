@@ -15,3 +15,15 @@ export function formatMoney(value) {
 export function monthLabel(month) {
   return MONTH_NAMES[month - 1] || String(month);
 }
+
+// La fel ca formatMoney, dar cu "+" explicit pentru valori pozitive - util cand
+// afisam o diferenta (fata de o tinta, de exemplu), unde semnul conteaza si
+// pentru 0/valori pozitive, nu doar pentru cele negative (formatMoney pune deja
+// "-" automat pentru valori negative).
+export function formatSignedMoney(value) {
+  const n = Number(value) || 0;
+  const formatted = formatMoney(Math.abs(n));
+  if (n > 0) return `+${formatted}`;
+  if (n < 0) return `-${formatted}`;
+  return formatted;
+}

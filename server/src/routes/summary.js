@@ -30,12 +30,15 @@ router.get('/', (req, res) => {
   const rows = developers.map((dev) => {
     const income = incomeByDev.get(dev.id) || 0;
     const cost = dev.monthly_cost || 0;
+    const incomeTarget = dev.monthly_revenue_target || 0;
     return {
       developer_id: dev.id,
       name: dev.name,
       role: dev.role,
       active: dev.active,
       income,
+      income_target: incomeTarget,
+      income_vs_target: income - incomeTarget,
       cost,
       profit: income - cost,
     };

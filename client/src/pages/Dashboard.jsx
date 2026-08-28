@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { api } from '../api.js';
-import { formatMoney } from '../format.js';
+import { formatMoney, formatSignedMoney } from '../format.js';
 import MonthPicker from '../components/MonthPicker.jsx';
 import StatCard from '../components/StatCard.jsx';
 import BarRow from '../components/BarRow.jsx';
@@ -94,6 +94,7 @@ export default function Dashboard() {
                       <th>Programator</th>
                       <th>Rol</th>
                       <th>Venit atribuit</th>
+                      <th>Fata de tinta</th>
                       <th>Cost</th>
                       <th>Profit</th>
                     </tr>
@@ -106,6 +107,12 @@ export default function Dashboard() {
                         </td>
                         <td className="muted">{row.role || '-'}</td>
                         <td>{formatMoney(row.income)}</td>
+                        <td
+                          className={row.income_vs_target >= 0 ? 'text-positive' : 'text-negative'}
+                          title={`Tinta: ${formatMoney(row.income_target)}`}
+                        >
+                          {formatSignedMoney(row.income_vs_target)}
+                        </td>
                         <td>{formatMoney(row.cost)}</td>
                         <td className={row.profit >= 0 ? 'text-positive' : 'text-negative'}>
                           {formatMoney(row.profit)}

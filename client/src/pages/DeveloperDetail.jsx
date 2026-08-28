@@ -9,6 +9,7 @@ export default function DeveloperDetail() {
   const [developer, setDeveloper] = useState(null);
   const [trend, setTrend] = useState(null);
   const [costInput, setCostInput] = useState('');
+  const [targetInput, setTargetInput] = useState('');
   const [savingCost, setSavingCost] = useState(false);
   const [error, setError] = useState('');
 
@@ -18,6 +19,7 @@ export default function DeveloperDetail() {
       .then((d) => {
         setDeveloper(d);
         setCostInput(String(d.monthly_cost ?? 0));
+        setTargetInput(String(d.monthly_revenue_target ?? 0));
       })
       .catch((err) => setError(err.message));
     api.getDeveloperTrend(id, 12).then(setTrend).catch((err) => setError(err.message));
@@ -29,7 +31,10 @@ export default function DeveloperDetail() {
     e.preventDefault();
     setSavingCost(true);
     try {
-      await api.updateDeveloper(id, { monthly_cost: Number(costInput) || 0 });
+      await api.updateDeveloper(id, {
+        monthly_cost: Number(costInput) || 0,
+        monthly_revenue_target: Number(targetInput) || 0,
+      });
       load();
     } catch (err) {
       setError(err.message);
@@ -78,20 +83,29 @@ export default function DeveloperDetail() {
       </div>
 
       <div className="card">
-        <h2>Cost lunar</h2>
+        <h2>Cost lunar si tinta de venit</h2>
         <p className="muted">
-          O singura suma, fixa — cat costa firma lunar acest programator (salariu, colaborare
-          etc.). Nu variaza de la o luna la alta; o poti schimba oricand aici.
+          Doua sume fixe, care nu variaza de la o luna la alta — le poti schimba oricand aici.
         </p>
         <form className="inline-form" onSubmit={handleCostSubmit}>
-          <input
-            type="number"
-            placeholder="Suma (EUR)"
-            value={costInput}
-            onChange={(e) => setCostInput(e.target.value)}
-            style={{ width: '10rem' }}
-            required
-          />
+          <label className="login-field" style={{ width: '10rem' }}>
+            Cost lunar (EUR)
+            <input
+              type="number"
+              value={costInput}
+              onChange={(e) => setCostInput(e.target.value)}
+              required
+            />
+          </label>
+          <label className="login-field" style={{ width: '10rem' }}>
+            Tinta venit (EUR)
+            <input
+              type="number"
+              value={targetInput}
+              onChange={(e) => setTargetInput(e.target.value)}
+              required
+            />
+          </label>
           <button type="submit" className="btn-primary" disabled={savingCost}>
             {savingCost ? 'Se salveaza...' : 'Salveaza'}
           </button>

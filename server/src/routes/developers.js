@@ -18,14 +18,17 @@ router.get('/', (req, res) => {
 });
 
 router.post('/', (req, res) => {
-  const { name, role, email, monthly_cost } = req.body;
+  const { name, role, email, monthly_cost, monthly_revenue_target } = req.body;
   if (!name || !name.trim()) {
     return res.status(400).json({ error: 'Numele este obligatoriu.' });
   }
   const cost = monthly_cost !== undefined ? Number(monthly_cost) || 0 : 0;
+  const target = monthly_revenue_target !== undefined ? Number(monthly_revenue_target) || 0 : 8000;
   const info = db
-    .prepare('INSERT INTO developers (name, role, email, monthly_cost) VALUES (?, ?, ?, ?)')
-    .run(name.trim(), role || null, email || null, cost);
+    .prepare(
+      'INSERT INTO developers (name, role, email, monthly_cost, monthly_revenue_target) VALUES (?, ?, ?, ?, ?)'
+    )
+    .run(name.trim(), role || null, email || null, cost, target);
   const developer = db.prepare('SELECT * FROM developers WHERE id = ?').get(info.lastInsertRowid);
   res.status(201).json(developer);
 });
@@ -51,15 +54,20 @@ router.put('/:id', (req, res) => {
   const developer = getDeveloperOr404(req, res);
   if (!developer) return;
 
-  const { name, role, email, active, monthly_cost } = req.body;
+  const { name, role, email, active, monthly_cost, monthly_revenue_target } = req.body;
   db.prepare(
-    `UPDATE developers SET name = ?, role = ?, email = ?, active = ?, monthly_cost = ? WHERE id = ?`
+    `UPDATE developers
+     SET name = ?, role = ?, email = ?, active = ?, monthly_cost = ?, monthly_revenue_target = ?
+     WHERE id = ?`
   ).run(
     name !== undefined ? name.trim() : developer.name,
     role !== undefined ? role : developer.role,
     email !== undefined ? email : developer.email,
     active !== undefined ? (active ? 1 : 0) : developer.active,
     monthly_cost !== undefined ? Number(monthly_cost) || 0 : developer.monthly_cost,
+    monthly_revenue_target !== undefined
+      ? Number(monthly_revenue_target) || 0
+      : developer.monthly_revenue_target,
     developer.id
   );
 
