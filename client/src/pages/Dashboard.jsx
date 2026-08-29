@@ -75,11 +75,7 @@ export default function Dashboard() {
         <>
           <div className="card">
             <h2>Cheltuieli fixe lunare</h2>
-            <p className="muted">
-              Cheltuieli fixe ale business-ului (chirie, unelte, abonamente etc.), care nu tin de
-              un anumit programator. Se impart in mod egal la programatorii activi (
-              {data.active_developer_count}) si suma rezultata se scade din profitul fiecaruia.
-            </p>
+            <p className="muted">Cheltuieli fixe + salarii Adi, Alex, Teo</p>
             <form className="inline-form" onSubmit={handleExpensesSubmit}>
               <input
                 type="number"
