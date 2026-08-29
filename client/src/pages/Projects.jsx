@@ -5,6 +5,21 @@ import { formatMoney } from '../format.js';
 
 const emptyForm = { name: '', client: '', description: '' };
 
+// Suma totala, plus - daca a contribuit mai mult de un programator - cine cat
+// a adus, intre paranteze. Cu un singur programator (sau zero), doar suma.
+function revenueLine(label, total, byDeveloper) {
+  const breakdown =
+    byDeveloper.length > 1
+      ? ` (${byDeveloper.map((d) => `${d.name} ${formatMoney(d.amount)}`).join(', ')})`
+      : '';
+  return (
+    <div className="project-total">
+      {label}: {formatMoney(total)}
+      {breakdown}
+    </div>
+  );
+}
+
 export default function Projects() {
   const [projects, setProjects] = useState([]);
   const [form, setForm] = useState(emptyForm);
@@ -95,7 +110,8 @@ export default function Projects() {
                   <tr key={p.id}>
                     <td>
                       <Link to={`/projects/${p.id}`}>{p.name}</Link>
-                      <div className="project-total">{formatMoney(p.total_revenue)}</div>
+                      {revenueLine('Luna aceasta', p.current_month_revenue, p.current_month_revenue_by_developer)}
+                      {revenueLine('Total', p.total_revenue, p.total_revenue_by_developer)}
                     </td>
                     <td className="muted">
                       {p.developers.length === 0 ? '-' : p.developers.map((d) => d.name).join(', ')}

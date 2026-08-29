@@ -12,6 +12,25 @@ function getProjectOr404(req, res) {
   return project;
 }
 
+function revenueByDeveloper(projectId, year, month) {
+  const params = [projectId];
+  let periodClause = '';
+  if (year !== undefined && month !== undefined) {
+    periodClause = 'AND pdr.year = ? AND pdr.month = ?';
+    params.push(year, month);
+  }
+  return db
+    .prepare(
+      `SELECT d.id, d.name, SUM(pdr.amount) AS amount
+       FROM project_developer_revenue pdr
+       JOIN developers d ON d.id = pdr.developer_id
+       WHERE pdr.project_id = ? ${periodClause}
+       GROUP BY d.id
+       ORDER BY d.name ASC`
+    )
+    .all(...params);
+}
+
 function attachDevelopers(project) {
   const developers = db
     .prepare(
@@ -22,11 +41,22 @@ function attachDevelopers(project) {
        ORDER BY d.name ASC`
     )
     .all(project.id);
-  // Total incasat pe acest proiect, de la inceput, pe toti programatorii si toate lunile.
-  const totalRevenue = db
-    .prepare('SELECT COALESCE(SUM(amount), 0) AS total FROM project_developer_revenue WHERE project_id = ?')
-    .get(project.id).total;
-  return { ...project, developers, total_revenue: totalRevenue };
+
+  const now = new Date();
+  const totalByDeveloper = revenueByDeveloper(project.id);
+  const currentMonthByDeveloper = revenueByDeveloper(project.id, now.getFullYear(), now.getMonth() + 1);
+
+  const totalRevenue = totalByDeveloper.reduce((sum, row) => sum + row.amount, 0);
+  const currentMonthRevenue = currentMonthByDeveloper.reduce((sum, row) => sum + row.amount, 0);
+
+  return {
+    ...project,
+    developers,
+    total_revenue: totalRevenue,
+    total_revenue_by_developer: totalByDeveloper,
+    current_month_revenue: currentMonthRevenue,
+    current_month_revenue_by_developer: currentMonthByDeveloper,
+  };
 }
 
 function isDeveloperAssigned(projectId, developerId) {
