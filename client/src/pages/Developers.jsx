@@ -37,15 +37,6 @@ export default function Developers() {
     }
   }
 
-  async function toggleActive(dev) {
-    try {
-      await api.updateDeveloper(dev.id, { active: dev.active ? 0 : 1 });
-      load();
-    } catch (err) {
-      setError(err.message);
-    }
-  }
-
   async function remove(dev) {
     if (!window.confirm(`Stergi programatorul "${dev.name}"? Se sterg si alocarile si veniturile lui.`)) return;
     try {
@@ -107,10 +98,7 @@ export default function Developers() {
               <thead>
                 <tr>
                   <th>Nume</th>
-                  <th>Rol</th>
-                  <th>Email</th>
                   <th>Cost lunar</th>
-                  <th>Status</th>
                   <th></th>
                 </tr>
               </thead>
@@ -120,14 +108,7 @@ export default function Developers() {
                     <td>
                       <Link to={`/developers/${dev.id}`}>{dev.name}</Link>
                     </td>
-                    <td className="muted">{dev.role || '-'}</td>
-                    <td className="muted">{dev.email || '-'}</td>
                     <td>{formatMoney(dev.monthly_cost)}</td>
-                    <td>
-                      <button type="button" className="badge-btn" onClick={() => toggleActive(dev)}>
-                        {dev.active ? 'Activ' : 'Inactiv'}
-                      </button>
-                    </td>
                     <td className="actions-cell">
                       <button type="button" className="btn-danger-ghost" onClick={() => remove(dev)}>
                         Sterge
