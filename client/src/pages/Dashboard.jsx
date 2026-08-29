@@ -123,7 +123,8 @@ export default function Dashboard() {
                       <th>Venit atribuit</th>
                       <th>Peste tinta</th>
                       <th>Sub tinta</th>
-                      <th>Cost</th>
+                      <th>Salariu</th>
+                      <th>Cheltuieli fixe</th>
                       <th>Profit</th>
                     </tr>
                   </thead>
@@ -146,7 +147,8 @@ export default function Dashboard() {
                         >
                           {formatSignedMoney(row.income_deficit)}
                         </td>
-                        <td>{formatMoney(row.cost)}</td>
+                        <td>{formatMoney(row.salary_cost)}</td>
+                        <td>{formatMoney(row.overhead_share)}</td>
                         <td className={row.profit >= 0 ? 'text-positive' : 'text-negative'}>
                           {formatMoney(row.profit)}
                         </td>

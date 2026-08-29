@@ -36,8 +36,9 @@ router.get('/', (req, res) => {
 
   const rows = developers.map((dev) => {
     const income = incomeByDev.get(dev.id) || 0;
+    const salaryCost = dev.monthly_cost || 0;
     const overhead = dev.active ? overheadShare : 0;
-    const cost = (dev.monthly_cost || 0) + overhead;
+    const cost = salaryCost + overhead;
     const incomeTarget = dev.monthly_revenue_target || 0;
     const diff = income - incomeTarget;
     return {
@@ -52,8 +53,11 @@ router.get('/', (req, res) => {
       // Un developer contribuie fie la unul, fie la celalalt, niciodata la ambele.
       income_surplus: Math.max(0, diff),
       income_deficit: Math.min(0, diff),
-      cost,
+      // Cost separat pe cele doua surse: salariul propriu-zis, si cota din
+      // cheltuielile fixe ale business-ului. cost = suma lor, pentru profit.
+      salary_cost: salaryCost,
       overhead_share: overhead,
+      cost,
       profit: income - cost,
     };
   });
@@ -65,10 +69,22 @@ router.get('/', (req, res) => {
       income_vs_target: acc.income_vs_target + row.income_vs_target,
       income_surplus: acc.income_surplus + row.income_surplus,
       income_deficit: acc.income_deficit + row.income_deficit,
+      salary_cost: acc.salary_cost + row.salary_cost,
+      overhead_share: acc.overhead_share + row.overhead_share,
       cost: acc.cost + row.cost,
       profit: acc.profit + row.profit,
     }),
-    { income: 0, income_target: 0, income_vs_target: 0, income_surplus: 0, income_deficit: 0, cost: 0, profit: 0 }
+    {
+      income: 0,
+      income_target: 0,
+      income_vs_target: 0,
+      income_surplus: 0,
+      income_deficit: 0,
+      salary_cost: 0,
+      overhead_share: 0,
+      cost: 0,
+      profit: 0,
+    }
   );
 
   res.json({
