@@ -22,7 +22,11 @@ function attachDevelopers(project) {
        ORDER BY d.name ASC`
     )
     .all(project.id);
-  return { ...project, developers };
+  // Total incasat pe acest proiect, de la inceput, pe toti programatorii si toate lunile.
+  const totalRevenue = db
+    .prepare('SELECT COALESCE(SUM(amount), 0) AS total FROM project_developer_revenue WHERE project_id = ?')
+    .get(project.id).total;
+  return { ...project, developers, total_revenue: totalRevenue };
 }
 
 function isDeveloperAssigned(projectId, developerId) {

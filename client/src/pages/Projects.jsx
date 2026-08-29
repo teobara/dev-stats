@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { api } from '../api.js';
+import { formatMoney } from '../format.js';
 
 const emptyForm = { name: '', client: '', description: '' };
 
@@ -85,9 +86,7 @@ export default function Projects() {
               <thead>
                 <tr>
                   <th>Proiect</th>
-                  <th>Client</th>
                   <th>Programatori</th>
-                  <th>Status</th>
                   <th></th>
                 </tr>
               </thead>
@@ -96,15 +95,10 @@ export default function Projects() {
                   <tr key={p.id}>
                     <td>
                       <Link to={`/projects/${p.id}`}>{p.name}</Link>
+                      <div className="project-total">{formatMoney(p.total_revenue)}</div>
                     </td>
-                    <td className="muted">{p.client || '-'}</td>
                     <td className="muted">
                       {p.developers.length === 0 ? '-' : p.developers.map((d) => d.name).join(', ')}
-                    </td>
-                    <td>
-                      <span className={`badge ${p.status === 'active' ? 'badge-active' : 'badge-archived'}`}>
-                        {p.status === 'active' ? 'Activ' : 'Arhivat'}
-                      </span>
                     </td>
                     <td className="actions-cell">
                       <button type="button" className="btn-danger-ghost" onClick={() => remove(p)}>

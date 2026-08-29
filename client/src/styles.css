@@ -250,6 +250,12 @@ tr:last-child td {
   white-space: normal;
 }
 
+.project-total {
+  font-size: 10px;
+  color: var(--muted);
+  margin-top: 0.2rem;
+}
+
 a {
   color: var(--primary);
 }
