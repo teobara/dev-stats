@@ -143,7 +143,7 @@ export default function Dashboard() {
                             </div>
                           )}
                         </td>
-                        <td>{formatMoney(row.income)}</td>
+                        <td className="text-bold">{formatMoney(row.income)}</td>
                         <td
                           className={row.income_surplus > 0 ? 'text-positive' : 'muted'}
                           title={`Tinta: ${formatMoney(row.income_target)}`}
