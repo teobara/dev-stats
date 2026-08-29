@@ -34,6 +34,22 @@ router.get('/', (req, res) => {
     monthlyIncomeByDeveloper(year, month).map((row) => [row.developer_id, row.income])
   );
 
+  const projectsByDeveloper = new Map();
+  const projectAssignmentRows = db
+    .prepare(
+      `SELECT pd.developer_id, p.id AS project_id, p.name AS project_name
+       FROM project_developers pd
+       JOIN projects p ON p.id = pd.project_id
+       ORDER BY p.name ASC`
+    )
+    .all();
+  for (const row of projectAssignmentRows) {
+    if (!projectsByDeveloper.has(row.developer_id)) {
+      projectsByDeveloper.set(row.developer_id, []);
+    }
+    projectsByDeveloper.get(row.developer_id).push({ id: row.project_id, name: row.project_name });
+  }
+
   const rows = developers.map((dev) => {
     const income = incomeByDev.get(dev.id) || 0;
     const salaryCost = dev.monthly_cost || 0;
@@ -46,6 +62,7 @@ router.get('/', (req, res) => {
       name: dev.name,
       role: dev.role,
       active: dev.active,
+      projects: projectsByDeveloper.get(dev.id) || [],
       income,
       income_target: incomeTarget,
       income_vs_target: diff,

@@ -133,6 +133,15 @@ export default function Dashboard() {
                       <tr key={row.developer_id}>
                         <td>
                           <Link to={`/developers/${row.developer_id}`}>{row.name}</Link>
+                          {row.projects.length > 0 && (
+                            <div className="dev-project-list">
+                              {row.projects.map((p) => (
+                                <Link key={p.id} to={`/projects/${p.id}`}>
+                                  {p.name}
+                                </Link>
+                              ))}
+                            </div>
+                          )}
                         </td>
                         <td>{formatMoney(row.income)}</td>
                         <td

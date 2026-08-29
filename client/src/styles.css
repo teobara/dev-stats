@@ -237,6 +237,19 @@ tr:last-child td {
   border-bottom: none;
 }
 
+.dev-project-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+  margin-top: 0.2rem;
+}
+
+.dev-project-list a {
+  font-size: 10px;
+  color: var(--muted);
+  white-space: normal;
+}
+
 a {
   color: var(--primary);
 }
