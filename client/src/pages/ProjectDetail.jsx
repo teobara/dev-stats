@@ -6,11 +6,31 @@ import { formatMoney, monthLabel } from '../format.js';
 const now = new Date();
 const emptyRevenueForm = {
   developer_id: '',
-  year: now.getFullYear(),
-  month: now.getMonth() + 1,
+  fromYear: now.getFullYear(),
+  fromMonth: now.getMonth() + 1,
+  toYear: now.getFullYear(),
+  toMonth: now.getMonth() + 1,
   amount: '',
   note: '',
 };
+
+// Enumera toate lunile (an, luna) intre start si sfarsit, inclusiv - util cand
+// un proiect are aceeasi suma lunara pe mai multe luni la rand, ca sa nu le
+// introduci una cate una. Plafonat la 36 de luni, ca protectie.
+function monthsInRange(fromYear, fromMonth, toYear, toMonth) {
+  const months = [];
+  let y = fromYear;
+  let m = fromMonth;
+  while ((y < toYear || (y === toYear && m <= toMonth)) && months.length < 36) {
+    months.push({ year: y, month: m });
+    m += 1;
+    if (m > 12) {
+      m = 1;
+      y += 1;
+    }
+  }
+  return months;
+}
 
 export default function ProjectDetail() {
   const { id } = useParams();
@@ -76,13 +96,31 @@ export default function ProjectDetail() {
       setError('Alege un programator.');
       return;
     }
+
+    const { fromYear, fromMonth, toYear, toMonth } = revenueForm;
+    if (toYear < fromYear || (toYear === fromYear && toMonth < fromMonth)) {
+      setError('Luna de sfarsit e inainte de luna de inceput.');
+      return;
+    }
+
+    const months = monthsInRange(fromYear, fromMonth, toYear, toMonth);
+    const developerId = Number(revenueForm.developer_id);
+    const amount = Number(revenueForm.amount) || 0;
+
     try {
-      await api.setProjectRevenue(id, {
-        ...revenueForm,
-        developer_id: Number(revenueForm.developer_id),
-        amount: Number(revenueForm.amount) || 0,
-      });
-      setRevenueForm({ ...emptyRevenueForm, year: revenueForm.year, month: revenueForm.month });
+      // Aceeasi suma, pentru fiecare luna din interval, una cate una.
+      for (const { year, month } of months) {
+        await api.setProjectRevenue(id, {
+          developer_id: developerId,
+          year,
+          month,
+          amount,
+          note: revenueForm.note,
+        });
+      }
+      // Pastram acelasi interval selectat - util cand mai adaugi un programator
+      // pentru aceleasi luni (doar schimbi programatorul si suma).
+      setRevenueForm({ ...emptyRevenueForm, fromYear, fromMonth, toYear, toMonth });
       load();
     } catch (err) {
       setError(err.message);
@@ -168,7 +206,9 @@ export default function ProjectDetail() {
       <div className="card">
         <h2>Adauga suma lunara</h2>
         <p className="muted">
-          Suma incasata datorita acestui programator, pe acest proiect, in luna selectata.
+          Suma incasata datorita acestui programator, pe acest proiect. Poti alege un interval de
+          mai multe luni (de la / pana la) daca proiectul are aceeasi suma in fiecare luna din
+          interval - se adauga cate o inregistrare pentru fiecare luna.
         </p>
         {project.developers.length === 0 ? (
           <p className="muted">Aloca mai intai un programator pe proiect, ca sa poti adauga o suma.</p>
@@ -186,9 +226,10 @@ export default function ProjectDetail() {
                 </option>
               ))}
             </select>
+            <span className="muted">de la</span>
             <select
-              value={revenueForm.month}
-              onChange={(e) => setRevenueForm({ ...revenueForm, month: Number(e.target.value) })}
+              value={revenueForm.fromMonth}
+              onChange={(e) => setRevenueForm({ ...revenueForm, fromMonth: Number(e.target.value) })}
             >
               {Array.from({ length: 12 }, (_, i) => i + 1).map((m) => (
                 <option key={m} value={m}>
@@ -198,8 +239,25 @@ export default function ProjectDetail() {
             </select>
             <input
               type="number"
-              value={revenueForm.year}
-              onChange={(e) => setRevenueForm({ ...revenueForm, year: Number(e.target.value) })}
+              value={revenueForm.fromYear}
+              onChange={(e) => setRevenueForm({ ...revenueForm, fromYear: Number(e.target.value) })}
+              style={{ width: '6rem' }}
+            />
+            <span className="muted">pana la</span>
+            <select
+              value={revenueForm.toMonth}
+              onChange={(e) => setRevenueForm({ ...revenueForm, toMonth: Number(e.target.value) })}
+            >
+              {Array.from({ length: 12 }, (_, i) => i + 1).map((m) => (
+                <option key={m} value={m}>
+                  {monthLabel(m)}
+                </option>
+              ))}
+            </select>
+            <input
+              type="number"
+              value={revenueForm.toYear}
+              onChange={(e) => setRevenueForm({ ...revenueForm, toYear: Number(e.target.value) })}
               style={{ width: '6rem' }}
             />
             <input
