@@ -41,6 +41,7 @@ export default function ProjectDetail() {
 
   const [assignDeveloperId, setAssignDeveloperId] = useState('');
   const [revenueForm, setRevenueForm] = useState(emptyRevenueForm);
+  const [editingEntry, setEditingEntry] = useState(null);
 
   function load() {
     api.getProject(id).then(setProject).catch((err) => setError(err.message));
@@ -121,10 +122,34 @@ export default function ProjectDetail() {
       // Pastram acelasi interval selectat - util cand mai adaugi un programator
       // pentru aceleasi luni (doar schimbi programatorul si suma).
       setRevenueForm({ ...emptyRevenueForm, fromYear, fromMonth, toYear, toMonth });
+      setEditingEntry(null);
       load();
     } catch (err) {
       setError(err.message);
     }
+  }
+
+  // Reumple formularul de mai sus cu valorile unei sume deja existente, ca s-o
+  // poti schimba (suma si/sau durata - extinzi "pana la" ca sa adaugi luni in
+  // plus la aceeasi suma; ca sa scurtezi, stergi individual lunile in plus).
+  function startEdit(entry) {
+    setRevenueForm({
+      developer_id: String(entry.developer_id),
+      fromYear: entry.year,
+      fromMonth: entry.month,
+      toYear: entry.year,
+      toMonth: entry.month,
+      amount: String(entry.amount),
+      note: entry.note || '',
+    });
+    setEditingEntry(entry);
+    setError('');
+    document.getElementById('revenue-form-card')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }
+
+  function cancelEdit() {
+    setRevenueForm(emptyRevenueForm);
+    setEditingEntry(null);
   }
 
   async function removeRevenue(developerId, year, month) {
@@ -203,12 +228,23 @@ export default function ProjectDetail() {
         )}
       </div>
 
-      <div className="card">
-        <h2>Adauga suma lunara</h2>
+      <div className="card" id="revenue-form-card">
+        <h2>{editingEntry ? 'Editeaza suma lunara' : 'Adauga suma lunara'}</h2>
         <p className="muted">
-          Suma incasata datorita acestui programator, pe acest proiect. Poti alege un interval de
-          mai multe luni (de la / pana la) daca proiectul are aceeasi suma in fiecare luna din
-          interval - se adauga cate o inregistrare pentru fiecare luna.
+          {editingEntry ? (
+            <>
+              Modifici suma lui <strong>{editingEntry.developer_name}</strong> pentru{' '}
+              {monthLabel(editingEntry.month)} {editingEntry.year}. Extinde "pana la" ca sa adaugi
+              si lunile urmatoare cu aceeasi suma; ca sa scurtezi un interval, sterge individual
+              lunile in plus mai jos.
+            </>
+          ) : (
+            <>
+              Suma incasata datorita acestui programator, pe acest proiect. Poti alege un interval
+              de mai multe luni (de la / pana la) daca proiectul are aceeasi suma in fiecare luna
+              din interval - se adauga cate o inregistrare pentru fiecare luna.
+            </>
+          )}
         </p>
         {project.developers.length === 0 ? (
           <p className="muted">Aloca mai intai un programator pe proiect, ca sa poti adauga o suma.</p>
@@ -273,8 +309,13 @@ export default function ProjectDetail() {
               onChange={(e) => setRevenueForm({ ...revenueForm, note: e.target.value })}
             />
             <button type="submit" className="btn-primary">
-              Salveaza
+              {editingEntry ? 'Actualizeaza' : 'Salveaza'}
             </button>
+            {editingEntry && (
+              <button type="button" className="btn-link" onClick={cancelEdit}>
+                Anuleaza
+              </button>
+            )}
           </form>
         )}
       </div>
@@ -304,6 +345,9 @@ export default function ProjectDetail() {
                         <td>{formatMoney(r.amount)}</td>
                         <td className="muted">{r.note || '-'}</td>
                         <td className="actions-cell">
+                          <button type="button" className="btn-link" onClick={() => startEdit(r)}>
+                            Editeaza
+                          </button>
                           <button
                             type="button"
                             className="btn-danger-ghost"
