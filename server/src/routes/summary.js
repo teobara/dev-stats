@@ -49,15 +49,20 @@ router.get('/', (req, res) => {
     )
     .get(year, month).total;
 
+  // Doar proiectele pentru care exista efectiv o suma setata in luna
+  // selectata (nu toate proiectele la care e alocat, indiferent de luna) -
+  // ca sa apara sub numele programatorului doar in lunile in care chiar
+  // "conteaza" acel proiect pentru el.
   const projectsByDeveloper = new Map();
   const projectAssignmentRows = db
     .prepare(
-      `SELECT pd.developer_id, p.id AS project_id, p.name AS project_name
-       FROM project_developers pd
-       JOIN projects p ON p.id = pd.project_id
+      `SELECT DISTINCT pdr.developer_id, p.id AS project_id, p.name AS project_name
+       FROM project_developer_revenue pdr
+       JOIN projects p ON p.id = pdr.project_id
+       WHERE pdr.year = ? AND pdr.month = ?
        ORDER BY p.name ASC`
     )
-    .all();
+    .all(year, month);
   for (const row of projectAssignmentRows) {
     if (!projectsByDeveloper.has(row.developer_id)) {
       projectsByDeveloper.set(row.developer_id, []);
