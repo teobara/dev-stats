@@ -25,10 +25,13 @@ router.get('/', (req, res) => {
   const settings = db.prepare('SELECT * FROM settings WHERE id = 1').get();
   const fixedExpenses = settings.fixed_monthly_expenses || 0;
 
-  // Cheltuielile fixe se impart in mod egal doar intre programatorii activi -
-  // unul inactiv nu mai primeste o cota din ele.
+  // Numarul la care se imparte e ales manual (settings.fixed_expenses_divisor),
+  // nu neaparat numarul de programatori activi din sistem - poate include si
+  // oameni care nu sunt tinuti evidenta ca "programator" (vezi nota libera).
+  // Suma se acorda in continuare doar programatorilor activi.
   const activeDeveloperCount = developers.filter((d) => d.active).length;
-  const overheadShare = activeDeveloperCount > 0 ? fixedExpenses / activeDeveloperCount : 0;
+  const expensesDivisor = Math.max(1, settings.fixed_expenses_divisor || 1);
+  const overheadShare = fixedExpenses / expensesDivisor;
 
   const incomeByDev = new Map(
     monthlyIncomeByDeveloper(year, month).map((row) => [row.developer_id, row.income])
@@ -111,6 +114,7 @@ router.get('/', (req, res) => {
     totals,
     fixed_monthly_expenses: fixedExpenses,
     fixed_expenses_note: settings.fixed_expenses_note || '',
+    fixed_expenses_divisor: expensesDivisor,
     active_developer_count: activeDeveloperCount,
     overhead_share: overheadShare,
   });
@@ -123,12 +127,10 @@ router.get('/developer/:id', (req, res) => {
   }
 
   const settings = db.prepare('SELECT * FROM settings WHERE id = 1').get();
-  const activeDeveloperCount = db
-    .prepare('SELECT COUNT(*) AS n FROM developers WHERE active = 1').get().n;
-  const overheadShare =
-    developer.active && activeDeveloperCount > 0
-      ? (settings.fixed_monthly_expenses || 0) / activeDeveloperCount
-      : 0;
+  const expensesDivisor = Math.max(1, settings.fixed_expenses_divisor || 1);
+  const overheadShare = developer.active
+    ? (settings.fixed_monthly_expenses || 0) / expensesDivisor
+    : 0;
 
   const monthsBack = Math.min(Math.max(Number(req.query.months) || 12, 1), 36);
   const now = new Date();

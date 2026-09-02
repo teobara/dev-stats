@@ -15,6 +15,7 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(true);
   const [expensesInput, setExpensesInput] = useState('');
   const [expensesNoteInput, setExpensesNoteInput] = useState('');
+  const [expensesDivisorInput, setExpensesDivisorInput] = useState('');
   const [savingExpenses, setSavingExpenses] = useState(false);
 
   function loadSummary() {
@@ -27,6 +28,7 @@ export default function Dashboard() {
           setData(res);
           setExpensesInput(String(res.fixed_monthly_expenses ?? 0));
           setExpensesNoteInput(res.fixed_expenses_note ?? '');
+          setExpensesDivisorInput(String(res.fixed_expenses_divisor ?? 1));
           setError('');
         }
       })
@@ -50,6 +52,7 @@ export default function Dashboard() {
       await api.updateSettings({
         fixed_monthly_expenses: Number(expensesInput) || 0,
         fixed_expenses_note: expensesNoteInput,
+        fixed_expenses_divisor: Number(expensesDivisorInput) || 1,
       });
       loadSummary();
     } catch (err) {
@@ -96,12 +99,21 @@ export default function Dashboard() {
                   style={{ width: '10rem' }}
                   required
                 />
+                <span className="muted">impartita la</span>
+                <input
+                  type="number"
+                  min="1"
+                  step="1"
+                  placeholder="Nr. programatori"
+                  value={expensesDivisorInput}
+                  onChange={(e) => setExpensesDivisorInput(e.target.value)}
+                  style={{ width: '7rem' }}
+                  required
+                />
                 <button type="submit" className="btn-primary" disabled={savingExpenses}>
                   {savingExpenses ? 'Se salveaza...' : 'Salveaza'}
                 </button>
-                <span className="muted">
-                  = {formatMoney(data.overhead_share)} / programator activ
-                </span>
+                <span className="muted">= {formatMoney(data.overhead_share)} / programator</span>
               </div>
             </form>
           </div>

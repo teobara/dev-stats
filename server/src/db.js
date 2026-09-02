@@ -230,4 +230,21 @@ if (!hasExpensesNote) {
   console.log('Migrare: adaugata coloana settings.fixed_expenses_note.');
 }
 
+// Migrare unica: numarul de "capete" la care se imparte suma cheltuielilor
+// fixe, ales manual (nu mai e neaparat numarul de programatori activi din
+// sistem - poate include si oameni care nu sunt tinuti evidenta ca "programator",
+// de-asta era nevoie si de nota libera de mai sus). Default-ul, la migrare,
+// e numarul curent de programatori activi, ca sa nu se schimbe nimic vizual.
+const hasExpensesDivisor = settingsColumns.some((c) => c.name === 'fixed_expenses_divisor');
+if (!hasExpensesDivisor) {
+  const currentActiveCount =
+    db.prepare('SELECT COUNT(*) AS n FROM developers WHERE active = 1').get().n || 1;
+  db.exec(
+    `ALTER TABLE settings ADD COLUMN fixed_expenses_divisor INTEGER NOT NULL DEFAULT ${Math.max(1, currentActiveCount)}`
+  );
+  console.log(
+    `Migrare: adaugata coloana settings.fixed_expenses_divisor (implicit ${Math.max(1, currentActiveCount)}, dupa numarul curent de programatori activi).`
+  );
+}
+
 module.exports = db;
