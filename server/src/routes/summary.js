@@ -110,6 +110,7 @@ router.get('/', (req, res) => {
     rows,
     totals,
     fixed_monthly_expenses: fixedExpenses,
+    fixed_expenses_note: settings.fixed_expenses_note || '',
     active_developer_count: activeDeveloperCount,
     overhead_share: overheadShare,
   });

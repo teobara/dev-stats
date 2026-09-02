@@ -14,6 +14,7 @@ export default function Dashboard() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(true);
   const [expensesInput, setExpensesInput] = useState('');
+  const [expensesNoteInput, setExpensesNoteInput] = useState('');
   const [savingExpenses, setSavingExpenses] = useState(false);
 
   function loadSummary() {
@@ -25,6 +26,7 @@ export default function Dashboard() {
         if (!cancelled) {
           setData(res);
           setExpensesInput(String(res.fixed_monthly_expenses ?? 0));
+          setExpensesNoteInput(res.fixed_expenses_note ?? '');
           setError('');
         }
       })
@@ -45,7 +47,10 @@ export default function Dashboard() {
     e.preventDefault();
     setSavingExpenses(true);
     try {
-      await api.updateSettings({ fixed_monthly_expenses: Number(expensesInput) || 0 });
+      await api.updateSettings({
+        fixed_monthly_expenses: Number(expensesInput) || 0,
+        fixed_expenses_note: expensesNoteInput,
+      });
       loadSummary();
     } catch (err) {
       setError(err.message);
@@ -75,22 +80,29 @@ export default function Dashboard() {
         <>
           <div className="card">
             <h2>Cheltuieli fixe lunare</h2>
-            <p className="muted">Cheltuieli fixe + salarii Adi, Alex, Teo</p>
-            <form className="inline-form" onSubmit={handleExpensesSubmit}>
+            <form onSubmit={handleExpensesSubmit}>
               <input
-                type="number"
-                placeholder="Suma (EUR)"
-                value={expensesInput}
-                onChange={(e) => setExpensesInput(e.target.value)}
-                style={{ width: '10rem' }}
-                required
+                placeholder="Descriere (ex: cheltuieli fixe + salarii ...)"
+                value={expensesNoteInput}
+                onChange={(e) => setExpensesNoteInput(e.target.value)}
+                style={{ width: '100%', marginBottom: '0.6rem' }}
               />
-              <button type="submit" className="btn-primary" disabled={savingExpenses}>
-                {savingExpenses ? 'Se salveaza...' : 'Salveaza'}
-              </button>
-              <span className="muted">
-                = {formatMoney(data.overhead_share)} / programator activ
-              </span>
+              <div className="inline-form">
+                <input
+                  type="number"
+                  placeholder="Suma (EUR)"
+                  value={expensesInput}
+                  onChange={(e) => setExpensesInput(e.target.value)}
+                  style={{ width: '10rem' }}
+                  required
+                />
+                <button type="submit" className="btn-primary" disabled={savingExpenses}>
+                  {savingExpenses ? 'Se salveaza...' : 'Salveaza'}
+                </button>
+                <span className="muted">
+                  = {formatMoney(data.overhead_share)} / programator activ
+                </span>
+              </div>
             </form>
           </div>
 

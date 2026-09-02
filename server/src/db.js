@@ -218,4 +218,16 @@ if (!hasRevenueTarget) {
 // Ne asiguram ca exista randul unic de setari (id=1), cu valori implicite.
 db.prepare('INSERT OR IGNORE INTO settings (id, fixed_monthly_expenses) VALUES (1, 0)').run();
 
+// Migrare unica: nota libera de sub cheltuielile fixe lunare - text editabil
+// direct din Dashboard, nu mai e nevoie sa se schimbe codul ca sa se modifice.
+// Default-ul pastreaza textul care era scris direct in cod pana acum.
+const settingsColumns = db.prepare('PRAGMA table_info(settings)').all();
+const hasExpensesNote = settingsColumns.some((c) => c.name === 'fixed_expenses_note');
+if (!hasExpensesNote) {
+  db.exec(
+    `ALTER TABLE settings ADD COLUMN fixed_expenses_note TEXT NOT NULL DEFAULT 'Cheltuieli fixe + salarii Adi, Alex, Teo'`
+  );
+  console.log('Migrare: adaugata coloana settings.fixed_expenses_note.');
+}
+
 module.exports = db;
