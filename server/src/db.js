@@ -247,4 +247,14 @@ if (!hasExpensesDivisor) {
   );
 }
 
+// Migrare unica: marcaj "proiect recurent" (mentenanta/incasari care se repeta),
+// folosit ca sa aratam separat, pe Dashboard, cat din venitul total vine din
+// astfel de proiecte.
+const projectColumns = db.prepare('PRAGMA table_info(projects)').all();
+const hasIsRecurring = projectColumns.some((c) => c.name === 'is_recurring');
+if (!hasIsRecurring) {
+  db.exec('ALTER TABLE projects ADD COLUMN is_recurring INTEGER NOT NULL DEFAULT 0');
+  console.log('Migrare: adaugata coloana projects.is_recurring.');
+}
+
 module.exports = db;

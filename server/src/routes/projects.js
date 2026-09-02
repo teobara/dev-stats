@@ -73,13 +73,13 @@ router.get('/', (req, res) => {
 });
 
 router.post('/', (req, res) => {
-  const { name, client, description } = req.body;
+  const { name, client, description, is_recurring } = req.body;
   if (!name || !name.trim()) {
     return res.status(400).json({ error: 'Numele proiectului este obligatoriu.' });
   }
   const info = db
-    .prepare('INSERT INTO projects (name, client, description) VALUES (?, ?, ?)')
-    .run(name.trim(), client || null, description || null);
+    .prepare('INSERT INTO projects (name, client, description, is_recurring) VALUES (?, ?, ?, ?)')
+    .run(name.trim(), client || null, description || null, is_recurring ? 1 : 0);
   const project = db.prepare('SELECT * FROM projects WHERE id = ?').get(info.lastInsertRowid);
   res.status(201).json(attachDevelopers(project));
 });
@@ -105,14 +105,15 @@ router.put('/:id', (req, res) => {
   const project = getProjectOr404(req, res);
   if (!project) return;
 
-  const { name, client, description, status } = req.body;
+  const { name, client, description, status, is_recurring } = req.body;
   db.prepare(
-    `UPDATE projects SET name = ?, client = ?, description = ?, status = ? WHERE id = ?`
+    `UPDATE projects SET name = ?, client = ?, description = ?, status = ?, is_recurring = ? WHERE id = ?`
   ).run(
     name !== undefined ? name.trim() : project.name,
     client !== undefined ? client : project.client,
     description !== undefined ? description : project.description,
     status !== undefined ? status : project.status,
+    is_recurring !== undefined ? (is_recurring ? 1 : 0) : project.is_recurring,
     project.id
   );
 

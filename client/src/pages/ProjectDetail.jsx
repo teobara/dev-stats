@@ -172,6 +172,15 @@ export default function ProjectDetail() {
     }
   }
 
+  async function toggleRecurring() {
+    try {
+      await api.updateProject(id, { is_recurring: project.is_recurring ? 0 : 1 });
+      load();
+    } catch (err) {
+      setError(err.message);
+    }
+  }
+
   if (!project) {
     return <div className="page">{error ? <p className="error-text">{error}</p> : <p>Se incarca...</p>}</div>;
   }
@@ -180,9 +189,15 @@ export default function ProjectDetail() {
     <div className="page">
       <div className="page-header">
         <h1>{project.name}</h1>
-        <button type="button" className="btn-danger-ghost" onClick={removeProject}>
-          Sterge proiect
-        </button>
+        <div className="inline-form">
+          <label className="checkbox-label">
+            <input type="checkbox" checked={Boolean(project.is_recurring)} onChange={toggleRecurring} />
+            Recurent (mentenanta / incasari care se repeta)
+          </label>
+          <button type="button" className="btn-danger-ghost" onClick={removeProject}>
+            Sterge proiect
+          </button>
+        </div>
       </div>
 
       {error && <p className="error-text">{error}</p>}

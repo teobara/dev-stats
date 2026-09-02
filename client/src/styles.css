@@ -297,6 +297,19 @@ a {
   align-items: center;
 }
 
+.checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.9rem;
+  color: var(--text);
+}
+
+.checkbox-label input[type='checkbox'] {
+  width: 1rem;
+  height: 1rem;
+}
+
 input,
 select {
   padding: 0.5rem 0.65rem;

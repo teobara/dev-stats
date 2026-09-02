@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { api } from '../api.js';
 import { formatMoney } from '../format.js';
 
-const emptyForm = { name: '', client: '', description: '' };
+const emptyForm = { name: '', client: '', description: '', is_recurring: false };
 
 // Suma totala, plus - daca a contribuit mai mult de un programator - cine cat
 // a adus, intre paranteze. Cu un singur programator (sau zero), doar suma.
@@ -86,6 +86,14 @@ export default function Projects() {
             value={form.description}
             onChange={(e) => setForm({ ...form, description: e.target.value })}
           />
+          <label className="checkbox-label">
+            <input
+              type="checkbox"
+              checked={form.is_recurring}
+              onChange={(e) => setForm({ ...form, is_recurring: e.target.checked })}
+            />
+            Recurent
+          </label>
           <button type="submit" className="btn-primary">
             Adauga
           </button>
@@ -110,6 +118,7 @@ export default function Projects() {
                   <tr key={p.id}>
                     <td>
                       <Link to={`/projects/${p.id}`}>{p.name}</Link>
+                      {Boolean(p.is_recurring) && <span className="badge badge-active">Recurent</span>}
                       {revenueLine('Luna aceasta', p.current_month_revenue, p.current_month_revenue_by_developer)}
                       {revenueLine('Total', p.total_revenue, p.total_revenue_by_developer)}
                     </td>

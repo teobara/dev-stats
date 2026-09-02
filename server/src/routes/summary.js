@@ -37,6 +37,18 @@ router.get('/', (req, res) => {
     monthlyIncomeByDeveloper(year, month).map((row) => [row.developer_id, row.income])
   );
 
+  // Cat din venitul lunii vine din proiecte marcate "recurente" (mentenanta,
+  // incasari care se repeta) - independent de programator, e o proprietate
+  // a proiectului.
+  const recurringIncome = db
+    .prepare(
+      `SELECT COALESCE(SUM(pdr.amount), 0) AS total
+       FROM project_developer_revenue pdr
+       JOIN projects p ON p.id = pdr.project_id
+       WHERE pdr.year = ? AND pdr.month = ? AND p.is_recurring = 1`
+    )
+    .get(year, month).total;
+
   const projectsByDeveloper = new Map();
   const projectAssignmentRows = db
     .prepare(
@@ -117,6 +129,7 @@ router.get('/', (req, res) => {
     fixed_expenses_divisor: expensesDivisor,
     active_developer_count: activeDeveloperCount,
     overhead_share: overheadShare,
+    recurring_income: recurringIncome,
   });
 });
 

@@ -119,7 +119,11 @@ export default function Dashboard() {
           </div>
 
           <div className="stat-row">
-            <StatCard label="Venit total" value={formatMoney(data.totals.income)} />
+            <StatCard
+              label="Venit total"
+              value={formatMoney(data.totals.income)}
+              note={`Din care ${formatMoney(data.recurring_income)} din mentenanta/incasari recurente`}
+            />
             <StatCard
               label="Fata de tinta (total)"
               value={formatSignedMoney(data.totals.income_deficit)}
