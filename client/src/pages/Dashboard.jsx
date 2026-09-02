@@ -26,9 +26,6 @@ export default function Dashboard() {
       .then((res) => {
         if (!cancelled) {
           setData(res);
-          setExpensesInput(String(res.fixed_monthly_expenses ?? 0));
-          setExpensesNoteInput(res.fixed_expenses_note ?? '');
-          setExpensesDivisorInput(String(res.fixed_expenses_divisor ?? 1));
           setError('');
         }
       })
@@ -45,15 +42,32 @@ export default function Dashboard() {
 
   useEffect(loadSummary, [year, month]);
 
+  // Cheltuielile fixe (suma/nota/impartitorul) nu tin de luna selectata pe
+  // Dashboard - le incarcam o singura data, separat, ca sa nu se resetaze la
+  // navigarea intre luni ce ai scris dar n-ai apucat inca sa salvezi.
+  useEffect(() => {
+    api
+      .getSettings()
+      .then((res) => {
+        setExpensesInput(String(res.fixed_monthly_expenses ?? 0));
+        setExpensesNoteInput(res.fixed_expenses_note ?? '');
+        setExpensesDivisorInput(String(res.fixed_expenses_divisor ?? 1));
+      })
+      .catch((err) => setError(err.message));
+  }, []);
+
   async function handleExpensesSubmit(e) {
     e.preventDefault();
     setSavingExpenses(true);
     try {
-      await api.updateSettings({
+      const settings = await api.updateSettings({
         fixed_monthly_expenses: Number(expensesInput) || 0,
         fixed_expenses_note: expensesNoteInput,
         fixed_expenses_divisor: Number(expensesDivisorInput) || 1,
       });
+      setExpensesInput(String(settings.fixed_monthly_expenses ?? 0));
+      setExpensesNoteInput(settings.fixed_expenses_note ?? '');
+      setExpensesDivisorInput(String(settings.fixed_expenses_divisor ?? 1));
       loadSummary();
     } catch (err) {
       setError(err.message);
