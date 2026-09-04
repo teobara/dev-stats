@@ -107,9 +107,10 @@ router.get('/', (req, res) => {
       income_surplus: acc.income_surplus + row.income_surplus,
       income_deficit: acc.income_deficit + row.income_deficit,
       salary_cost: acc.salary_cost + row.salary_cost,
+      // Suma cotelor individuale (fiecare programator activ primeste cate o
+      // cota) - poate diferi de fixedExpenses daca "impartita la" nu e egal
+      // cu numarul real de programatori activi. Pastrata doar informativ.
       overhead_share: acc.overhead_share + row.overhead_share,
-      cost: acc.cost + row.cost,
-      profit: acc.profit + row.profit,
     }),
     {
       income: 0,
@@ -119,10 +120,15 @@ router.get('/', (req, res) => {
       income_deficit: 0,
       salary_cost: 0,
       overhead_share: 0,
-      cost: 0,
-      profit: 0,
     }
   );
+
+  // Costul total real al lunii: cheltuielile fixe o singura data (nu
+  // inmultite pe fiecare programator) + toate salariile. Diferit, intentionat,
+  // de suma cost-urilor individuale (care folosesc cota per-persoana - vezi
+  // coloana "Cheltuieli fixe" din tabel si nota de mai sus).
+  totals.cost = fixedExpenses + totals.salary_cost;
+  totals.profit = totals.income - totals.cost;
 
   res.json({
     year,

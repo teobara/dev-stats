@@ -144,7 +144,11 @@ export default function Dashboard() {
               tone={data.totals.income_deficit < 0 ? 'negative' : 'positive'}
               note="Sunt adunate doar sumele sub tinta (minusurile) - surplusurile nu se scad din total."
             />
-            <StatCard label="Cost total" value={formatMoney(data.totals.cost)} />
+            <StatCard
+              label="Cost total"
+              value={formatMoney(data.totals.cost)}
+              note={`${formatMoney(data.totals.salary_cost)} salarii + ${formatMoney(data.fixed_monthly_expenses)} cheltuieli fixe (o singura data, nu per programator).`}
+            />
             <StatCard
               label="Profit total"
               value={formatMoney(data.totals.profit)}
